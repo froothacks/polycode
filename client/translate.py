@@ -19,6 +19,49 @@ def help():
     """
     print(helptext)
 
+def translate_file(config, target_file, DEST_LANG):
+    SOURCE_LANG = config['source_lang']
+    FUNCTION_CASE = config['function_case']
+    CLASS_CASE = config['class_case']
+
+    with open(target_file) as f:
+        source = f.read()
+    with open(TRANSLATE_DICT_FILES_PATH + '{}.{}{}.map'.format(
+        os.path.splitext(target_file)[0], 
+        DEST_LANG, 
+        os.path.splitext(target_file)[-1])) as f:
+        map = f.read()
+
+    result = lib.davidgu.polycode(doc=source, config=json.dumps(config), map=map)
+    translated = result['doc']
+    translation_map = json.dumps(result['map'])
+
+    # If the file is being translated back to its original language,
+    # write a file with no language extension
+    if DEST_LANG == config['source_lang']:
+        translated_file_name = '{}{}'.format(
+            os.path.splitext(os.path.splitext(target_file)[0])[0], 
+            os.path.splitext(target_file)[-1])
+        translated_file_path = translated_file_name
+    else:
+        translated_file_name = '{}.{}{}'.format(
+            os.path.splitext(target_file)[0], 
+            DEST_LANG, 
+            os.path.splitext(target_file)[-1])
+        translated_file_path = TRANSLATED_FILES_PATH_TEMPLATE.format(
+            DEST_LANG) + translated_file_name
+    translation_map_name = '{}.{}{}.map'.format(
+        os.path.splitext(target_file)[0], 
+        DEST_LANG, 
+        os.path.splitext(target_file)[-1])
+    print(translation_map_name)
+    translation_map_path = TRANSLATE_DICT_FILES_PATH + translation_map_name
+
+    # Write received files
+    with open(translated_file_path, 'w+') as wf:
+        wf.write(translated)
+    with open (translation_map_path, 'w+') as wf:
+        wf.write(translation_map)
 
 if __name__ == '__main__':
     if len(sys.argv) is 1:
