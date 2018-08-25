@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 import sys
-from subproceso import llamada
+from subprocess import call
 import polycode
-llamada(["ls", "-l"], cáscara=True)
-llamada(["git", "commit"], cáscara=True)
+call(["ls", "-l"], shell=True)
+call(["git", "commit"], shell=True)
 for arg in sys.argv:
-    impresión(arg)
-    impresión('test2')
-polycode.ayuda()
+    print(arg)
+    print('test2')
+polycode.help()
 
 
-def compilación_de_polycode():
-    impresión('heree')
-    impresión(sys.argv)
+def polycode_commit():
+    print('heree')
+    print(sys.argv)
     # polycode.translate_all(config, SOURCE_LANG);
-    polycode.sin traducir()
-    llamada(["git", " ".unirse(sys.argv[1:])], cáscara=True)
+    polycode.untranslate()
+    call(["git", " ".join(sys.argv[1:])], shell=True)
 
 
-if __nombre__ == '__main__':
-    compilación_de_polycode()
+if __name__ == '__main__':
+    polycode_commit()
