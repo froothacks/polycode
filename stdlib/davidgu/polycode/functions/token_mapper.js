@@ -32,7 +32,6 @@ module.exports = async (to, from, tokens, dictionary, context) => {
   results.forEach((item, i) => {
     tokens[i].translated = Case[Case.of(tokens[i].value)](item);
   });
-  console.log(results)
   return tokens;
 
   function translateText(text, fromLanguage, toLanguage) {
