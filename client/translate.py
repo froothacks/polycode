@@ -9,6 +9,9 @@ from lib import lib
 TRANSLATE_CONFIG_FILENAME = '.polycode'
 TRANSLATE_IGNORE_FILENAME = '.polycodeignore'
 
+TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
+TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
+
 def help():
     helptext = """
     Usage: translate [--help] [Destination Language]
