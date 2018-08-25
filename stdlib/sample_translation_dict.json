@@ -1,0 +1,17 @@
+{
+    // Language pairs are always in alphabetical order
+    // Language pairs are bidirectional, for example EN/FR and FR/EN do not
+    // both exist. To translate from FR -> EN look up the using the value and 
+    // use the key
+    "EN/FR":{
+        "banana":"banane",
+        "fish":"poisson",
+        "banana-fish":"banane-poisson"
+    },
+    "CN/EN":{
+        "香蕉":"banana",
+        "鱼":"fish",
+        "香蕉-鱼":"banana-fish"
+    }
+    
+}
