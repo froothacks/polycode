@@ -1,6 +1,5 @@
 import os
 import sys
-import requests
 import json
 from fnmatch import fnmatch
 from lib import lib
