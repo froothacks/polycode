@@ -63,6 +63,7 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     with open(translation_map_path, 'w+') as wf:
         wf.write(translation_map)
 
+
 def translate_all(config, DEST_LANG):
     """
     Translate all files, excluding those defined by the polycodeignore file
@@ -103,6 +104,7 @@ def translate_all(config, DEST_LANG):
     with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
         f.write(DEST_LANG)
 
+
 def translate():
     """
     Helper function performing all operations when command line arg 'translate'
@@ -118,6 +120,7 @@ def translate():
 
     DEST_LANG = sys.argv[2]
     translate_all(config, DEST_LANG)
+
 
 def untranslate():
     """
@@ -135,6 +138,7 @@ def untranslate():
 
     SOURCE_LANG = config['source_lang']
     translate_all(config, SOURCE_LANG)
+
 
 if __name__ == '__main__':
     if len(sys.argv) is 1:
