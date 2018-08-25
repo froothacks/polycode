@@ -2,7 +2,8 @@ import os
 import sys
 import json
 from fnmatch import fnmatch
-from lib import lib
+import requests
+# from lib import lib as lib_inst
 
 # Polyglot
 
@@ -12,6 +13,7 @@ TRANSLATE_TEMP_FILENAME = '.polycodetmp'
 
 TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
 TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
+SERVER_URL = 'https://davidgu.stdlib.com/polycode@dev'
 
 
 def help():
@@ -19,7 +21,7 @@ def help():
     Usage: polycode [--help] [Destination Language]
 
     Examples:
-      polycode build ES -> Builds Spanish project version into default lang
+      polycode untranslate
       polycode translate ES -> Translates current project into Spanish
       polycode --f targetfile ES -> Translates file 'targetfile' into Spanish
     """
@@ -27,6 +29,9 @@ def help():
 
 
 def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
+    """
+    Translate a specific file
+    """
     FUNCTION_CASE = config['function_case']
     CLASS_CASE = config['class_case']
 
@@ -38,13 +43,17 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     if os.path.isfile(map_file_path):
         with open(map_file_path) as f:
             map = f.read()
+            map = json.loads(map)
 
-    result = lib.davidgu.polycode['@dev'](doc=source,
-                                  config=json.dumps(config), map=map)
+    # result = lib_inst.davidgu.polycode['@dev'](source, config, map)
+    payload = {'doc': source, 'from': SOURCE_LANG, 'to': DEST_LANG, 'map': map}
+    req = requests.get(SERVER_URL, params=payload)
+    result = json.loads(req.text)
+
     translated = result['doc']
     translation_map = json.dumps(result['map'])
 
-    # Translations overwrite the translated file 
+    # Translations overwrite the translated file
     translated_file_path = target_file
     translation_map_path = map_file_path
 
@@ -55,6 +64,9 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
         wf.write(translation_map)
 
 def translate_all(config, DEST_LANG):
+    """
+    Translate all files, excluding those defined by the polycodeignore file
+    """
     # Load polycodeignore
     ignore_files = []
     if os.path.isfile(TRANSLATE_IGNORE_FILENAME):
@@ -74,9 +86,15 @@ def translate_all(config, DEST_LANG):
             filenames = [n for n in filenames if not fnmatch(n, ignore)]
         target_files.extend(filenames)
 
-    # The temp file contains the current repo language
-    with open(TRANSLATE_TEMP_FILENAME) as f:
-        SOURCE_LANG = f.read()
+    # Read current repo language from temp file if it exists. Else, assume that
+    # translation has never been run and thus the language is the source lang
+    if os.path.isfile(TRANSLATE_TEMP_FILENAME):
+        with open(TRANSLATE_TEMP_FILENAME) as f:
+            SOURCE_LANG = f.read()
+    else:
+        with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
+            f.write(config['source_lang'])
+        SOURCE_LANG = config['source_lang']
 
     for file in target_files:
         if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
@@ -85,6 +103,38 @@ def translate_all(config, DEST_LANG):
     with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
         f.write(DEST_LANG)
 
+def translate():
+    """
+    Helper function performing all operations when command line arg 'translate'
+    is called. Allows for no argument calling of translation function.
+    """
+    # Load config file
+    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
+        with open(TRANSLATE_CONFIG_FILENAME) as f:
+            config = json.load(f)
+    else:
+        print("Error: No config file found!")
+        sys.exit()
+
+    DEST_LANG = sys.argv[2]
+    translate_all(config, DEST_LANG)
+
+def untranslate():
+    """
+    Helper function performing all operations when command line arg
+    'untranslate' is called. Allows for no argument calling of untranslation
+    function.
+    """
+    # Load config file
+    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
+        with open(TRANSLATE_CONFIG_FILENAME) as f:
+            config = json.load(f)
+    else:
+        print("Error: No config file found!")
+        sys.exit()
+
+    SOURCE_LANG = config['source_lang']
+    translate_all(config, SOURCE_LANG)
 
 if __name__ == '__main__':
     if len(sys.argv) is 1:
@@ -113,12 +163,10 @@ if __name__ == '__main__':
             f.write(config['source_lang'])
 
     if sys.argv[1] == 'translate':
-        DEST_LANG = sys.argv[2]
-        translate_all(config, DEST_LANG)
+        translate()
 
-    if sys.argv[1] == 'build':
-        SOURCE_LANG = config['source_lang']
-        translate_all(config, SOURCE_LANG)
+    if sys.argv[1] == 'untranslate':
+        untranslate()
 
     # if sys.argv[1] == '--f':
     #     target_file = sys.argv[2]
