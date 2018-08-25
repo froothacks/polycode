@@ -29,6 +29,10 @@ if __name__ == '__main__':
         help() 
         sys.exit()
 
+    # Create translation cache folder if it does not exist
+    if not os.path.exists(TRANSLATE_DICT_FILES_PATH):
+        os.makedirs(TRANSLATE_DICT_FILES_PATH)
+
     if sys.argv[1] == 'build':
         # Load config file
         if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
