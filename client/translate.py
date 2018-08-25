@@ -110,38 +110,9 @@ if __name__ == '__main__':
 
         for file in target_files:
             if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
-                # translate_file(file, DEST_LANG)
-                print(file)
+                translate_file(config, file, DEST_LANG)
 
     if sys.argv[1] == '--f':
         target_file = sys.argv[2]
         DEST_LANG = sys.argv[3]
-        translate_file(target_file, DEST_LANG)
-
-def translate_file(target_file, DEST_LANG):
-    SOURCE_LANG = config['source_lang']
-    FUNCTION_CASE = config['function_case']
-    CLASS_CASE = config['class_case']
-
-    with open(target_file) as f:
-        source = f.read()
-        #TODO: Send the source file to be translated
-        #TODO: Receive the translated source file
-        #TODO: Receive the translation map file
-        translated = f.read()
-        translation_map = '{}'
-
-        translated_file_name = '{}.{}{}'.format(
-            os.path.splitext(target_file)[0], 
-            DEST_LANG, 
-            os.path.splitext(target_file)[-1])
-        translation_map_name = '{}.{}{}.map'.format(
-            os.path.splitext(target_file)[0], 
-            DEST_LANG, 
-            os.path.splitext(target_file)[-1])
-
-        # Write received files
-        with open(translated_file_name, 'w+') as wf:
-            wf.write(translated)
-        with open (translation_map, 'w+') as wf:
-            wf.write(translation_map)
+        translate_file(config, target_file, DEST_LANG)
