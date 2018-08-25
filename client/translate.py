@@ -69,6 +69,7 @@ def translate_file(config, target_file, DEST_LANG):
     with open(translation_map_path, 'w+') as wf:
         wf.write(translation_map)
 
+
 if __name__ == '__main__':
     if len(sys.argv) is 1:
         help()
