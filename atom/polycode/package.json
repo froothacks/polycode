@@ -1,18 +1,18 @@
 {
-  "name": "atom",
-  "main": "./lib/atom",
+  "name": "polycode",
+  "main": "./lib/polycode",
   "version": "0.0.0",
   "description": "A short description of your package",
-  "keywords": [
-  ],
+  "keywords": [],
   "activationCommands": {
-    "atom-workspace": "atom:toggle"
+    "atom-workspace": "polycode:translate"
   },
-  "repository": "https://github.com/atom/atom",
+  "repository": "https://github.com/atom/polycode",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
+    "python-shell": "^0.5.0"
   }
 }
