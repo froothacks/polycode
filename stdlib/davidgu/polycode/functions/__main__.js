@@ -1,10 +1,16 @@
+const lib = require("lib");
+
 /**
-* A basic Hello World function
-* @param {string} name Who you're saying hello to
+* @param {string} doc Plaintext of the document to be translated
+* @param {object} config
+* @param {object} map
 * @returns {string}
 */
-module.exports = (name = 'world', context, callback) => {
-
-  callback(null, `hello ${name}`);
-
+module.exports = (doc="", config, map, context, callback) => {
+  lib.davidgu.polycode.get_tokens(doc, (err, tokens) => {
+    for (var token in tokens) token.translated = "ttt";
+    lib.davidgu.polycode.update_docs(doc, tokens, (err, doc) => {
+      callback(null, doc);
+    });
+  });
 };
