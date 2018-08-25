@@ -5,8 +5,9 @@
   "author": "davidgu <david.gu@hotmail.com>",
   "main": "functions/__main__.js",
   "dependencies": {
-    "filbert": "^0.1.20",
-    "google-translate": "^2.2.0"
+    "google-translate": "^2.2.0",
+    "lib": "^3.0.2",
+    "filbert": "^0.1.20"
   },
   "private": true,
   "stdlib": {
