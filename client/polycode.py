@@ -86,9 +86,15 @@ def translate_all(config, DEST_LANG):
             filenames = [n for n in filenames if not fnmatch(n, ignore)]
         target_files.extend(filenames)
 
-    # The temp file contains the current repo language
-    with open(TRANSLATE_TEMP_FILENAME) as f:
-        SOURCE_LANG = f.read()
+    # Read current repo language from temp file if it exists. Else, assume that
+    # translation has never been run and thus the language is the source lang
+    if os.path.isfile(TRANSLATE_TEMP_FILENAME):
+        with open(TRANSLATE_TEMP_FILENAME) as f:
+            SOURCE_LANG = f.read()
+    else:
+        with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
+            f.write(config['source_lang'])
+        SOURCE_LANG = config['source_lang']
 
     for file in target_files:
         if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
