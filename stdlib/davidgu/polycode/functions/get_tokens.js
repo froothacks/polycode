@@ -2,20 +2,24 @@ const filbert = require("filbert");
 
 /**
 * @param {string} doc
-* @returns {array} tokens
+* @returns {array} tokens_
 */
 module.exports = (doc, callback) => {
-  tokens = [];
+  var tokens_ = [];
 
-  nextToken = filbert.tokenize(doc);
+  var nextToken = filbert.tokenize(doc);
 
-  t = nextToken();
-  while (t.type.type !== "eof") {
-    if (t.type.type === "name") {
-      tokens.push(t);
+  var t = nextToken();
+  console.log(t)
+  while (t["type"]["type"] !== "eof") {
+    if (t["type"]["type"] === "name") {
+      tokens_.push(Object.assign({}, t));
     }
+    console.log(tokens_);
     t = nextToken();
   }
 
-  callback(null, tokens);
+  console.log("HIIII ", tokens_);
+
+  callback(null, tokens_);
 };
