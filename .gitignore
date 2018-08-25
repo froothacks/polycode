@@ -18,7 +18,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -131,3 +130,6 @@ pip-selfcheck.json
 # Secrets
 secrets.json
 env.json
+
+# Nodejs
+node_modules/
