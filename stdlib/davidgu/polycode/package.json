@@ -4,7 +4,9 @@
   "description": "",
   "author": "davidgu <david.gu@hotmail.com>",
   "main": "functions/__main__.js",
-  "dependencies": {},
+  "dependencies": {
+    "google-translate": "^2.2.0"
+  },
   "private": true,
   "stdlib": {
     "build": "faaslang",
