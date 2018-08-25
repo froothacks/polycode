@@ -3,7 +3,7 @@
 * @param {array} tokens
 * @returns {string} doc
 */
-module.exports = (doc, tokens, callback) => {
+module.exports = async (doc, tokens) => {
   offset = 0;
 
   tokens.forEach(t => {
@@ -15,5 +15,5 @@ module.exports = (doc, tokens, callback) => {
     doc = before + t.translated + after;
   });
 
-  callback(null, doc);
+  return doc
 };
