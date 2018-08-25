@@ -4,7 +4,7 @@ const lib = require("lib");
 * @param {string} doc Plaintext of the document to be translated
 * @param {object} config
 * @param {object} map
-* @returns {string}
+* @returns {any}
 */
 module.exports = (doc="", config, map, context, callback) => {
   lib.davidgu.polycode.get_tokens(doc, (err, tokens) => {
