@@ -130,3 +130,4 @@ pip-selfcheck.json
 
 # Secrets
 secrets.json
+env.json
