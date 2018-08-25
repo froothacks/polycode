@@ -2,11 +2,12 @@ import os
 import sys
 import requests
 import json
+from fnmatch import fnmatch
 
 # Polyglot
 
 TRANSLATE_CONFIG_FILENAME = '.polycode'
-TRANSLATE_DATA_FILENAME = '.polycode_data'
+TRANSLATE_IGNORE_FILENAME = '.polycodeignore'
 
 def help():
     helptext = """
@@ -37,24 +38,30 @@ if __name__ == '__main__':
             print("Error: No config file found!")
             sys.exit()
 
-        # Check if translate data file exists in current repo
-        if os.path.isfile(TRANSLATE_DATA_FILENAME):
-            with open(TRANSLATE_DATA_FILENAME) as f:
-                translation_file = json.load(f)
-        else:
-            translation_file = {}
+        # Load polycodeignore
+        ignore_files = []
+        if os.path.isfile(TRANSLATE_IGNORE_FILENAME):
+            with open(TRANSLATE_IGNORE_FILENAME) as f:
+                for line in f:
+                    ignore_files.append(line)
 
         DEST_LANG = sys.argv[2]
         TARGET_FILE_EXTENSIONS = config['target_file_extensions']
 
         # Begin recursive folder walk in current directory
         walk_dir = os.path.abspath('.')
+        target_files = []
         for root, subdirs, files in os.walk(walk_dir):
-            for filename in files:
-                target_file = os.path.join(root, filename)
-                if os.path.splitext(target_file)[-1] in TARGET_FILE_EXTENSIONS:
-                    translate_file(target_file, DEST_LANG)
-                    print(target_file)
+            filenames = [os.path.join(root, file) for file in files]
+            filenames = [os.path.relpath(file) for file in filenames]
+            for ignore in ignore_files:
+                filenames = [n for n in filenames if not fnmatch(n, ignore)]
+            target_files.extend(filenames)
+
+        for file in target_files:
+            if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
+                # translate_file(file, DEST_LANG)
+                print(file)
 
     if sys.argv[1] == '--f':
         target_file = sys.argv[2]
