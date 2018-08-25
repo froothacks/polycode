@@ -3,42 +3,74 @@ const lib = require('lib');
 const Case = require('case');
 
 /**
-* @param {string} to
-* @param {string} from
 * @param {array} tokens
+* @param {string} from
+* @param {string} to
 * @param {object} map
-* @returns {array}
+* @returns {array} 
 */
-module.exports = async (to, from, tokens, map, context) => {
+module.exports = async (tokens, from, to, map) => {
   const allPromises = [];
 
-  var toLangIdx = 1;
-  var fromLangIdx = 0;
+  var fromLangIdx, toLangIdx;
 
-  if (map["languages"]) {
-    toLangIdx = map["languages"].indexOf(to);
-    fromLangIdx = map["languages"].indexOf(from);
+  if (!map["languages"]) {
+    map["languages"] = []
   }
+
+  if (!map["tokens"]) {
+    map["tokens"] = []
+  }
+
+  fromLangIdx = map["languages"].indexOf(from);
+  toLangIdx = map["languages"].indexOf(to);
+  if (fromLangIdx === -1) { // from language not found
+    fromLangIdx = map["languages"].length;
+    map["languages"].push(from);
+    map["tokens"].forEach(row => {row.add(null)});
+  }
+  if (toLangIdx === -1) { // to language not found
+    toLangIdx = map["languages"].length;
+    map["languages"].push(to);
+    map["tokens"].forEach(row => {row.add(null)});
+  }
+
+  console.log("map")
+  console.log(map)
 
   for (let i = 0; i < tokens.length; i++) {
     let inDict = false;
-    if (map["tokens"]) {
-      map["tokens"].forEach(entry => {
-        if (entry[fromLangIdx] === tokens[i].value) {
-          tokens[i].translated = entry[toLangIdx];
-          inDict = true;
-        }
-      });
-    }
+    map["tokens"].forEach(row => {
+      if (row[toLangIdx] && row[fromLangIdx] === tokens[i].value) {
+        tokens[i].translated = row[toLangIdx];
+        inDict = true;
+      }
+    });
     if (!inDict) {
       allPromises.push(translateText(Case.lower(tokens[i].value), from, to));
     }
   }
   const results = await Promise.all(allPromises);
   results.forEach((item, i) => {
-    tokens[i].translated = Case[Case.of(tokens[i].value)](item);
+    origToken = tokens[i].value;
+    tokens[i].translated = Case[Case.of(origToken)](item);
+    var found = false;
+    for (var i = 0; i < map["tokens"].length; i++) {
+      if (map["tokens"][i][fromLangIdx] === origToken) {
+        map["tokens"][i][toLangIdx] = tokens[i].translated;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      row = new Array(map["languages"].length).fill(null);
+      row[fromLangIdx] = origToken;
+      row[toLangIdx] = tokens[i].translated;
+      map["tokens"].push(row);
+    }
   });
-  return tokens;
+  console.log("tokens", tokens);
+  return [tokens, map];
 
   function translateText(text, fromLanguage, toLanguage) {
     return new Promise((resolve, reject) => {
