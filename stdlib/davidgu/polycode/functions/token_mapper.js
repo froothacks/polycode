@@ -6,24 +6,30 @@ const Case = require('case');
 * @param {string} to
 * @param {string} from
 * @param {array} tokens
-* @param {object} dictionary
+* @param {object} map
 * @returns {array}
 */
-
-module.exports = async (to, from, tokens, dictionary, context) => {
+module.exports = async (to, from, tokens, map, context) => {
   const allPromises = [];
 
-  const toLangIdx = dictionary.languages.indexOf(to);
-  const fromLangIdx = dictionary.languages.indexOf(from);
+  var toLangIdx = 1;
+  var fromLangIdx = 0;
+
+  if (map["languages"]) {
+    toLangIdx = map["languages"].indexOf(to);
+    fromLangIdx = map["languages"].indexOf(from);
+  }
 
   for (let i = 0; i < tokens.length; i++) {
     let inDict = false;
-    dictionary.tokens.forEach(entry => { // as in dictionary entry
-      if (entry[fromLangIdx] === tokens[i].value) {
-        tokens[i].translated = entry[toLangIdx];
-        inDict = true;
-      }
-    });
+    if (map["tokens"]) {
+      map["tokens"].forEach(entry => {
+        if (entry[fromLangIdx] === tokens[i].value) {
+          tokens[i].translated = entry[toLangIdx];
+          inDict = true;
+        }
+      });
+    }
     if (!inDict) {
       allPromises.push(translateText(Case.lower(tokens[i].value), from, to));
     }
