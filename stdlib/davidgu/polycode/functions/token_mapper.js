@@ -7,7 +7,7 @@ const Case = require('case');
 * @param {string} from
 * @param {string} to
 * @param {object} map
-* @returns {array} 
+* @returns {object} 
 */
 module.exports = async (tokens, from, to, map) => {
   const allPromises = [];
@@ -70,7 +70,7 @@ module.exports = async (tokens, from, to, map) => {
     }
   });
   console.log("tokens", tokens);
-  return [tokens, map];
+  return {"tokens": tokens, "map": map};
 
   function translateText(text, fromLanguage, toLanguage) {
     return new Promise((resolve, reject) => {
