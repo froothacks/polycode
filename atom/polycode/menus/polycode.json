@@ -1,0 +1,34 @@
+{
+  "context-menu": {
+    "atom-text-editor": [
+      {
+        "label": "Translate project",
+        "command": "polycode:translate"
+      },
+      {
+        "label": "Untranslate project",
+        "command": "polycode:untranslate"
+      }
+    ]
+  },
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "polycode",
+          "submenu": [
+            {
+              "label": "Translate project into target language.",
+              "command": "polycode:translate"
+            },
+            {
+              "label": "Translate project",
+              "command": "polycode:untranslate"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
