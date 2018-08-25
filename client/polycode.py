@@ -2,7 +2,8 @@ import os
 import sys
 import json
 from fnmatch import fnmatch
-from lib import lib
+import requests
+# from lib import lib as lib_inst
 
 # Polyglot
 
@@ -12,6 +13,7 @@ TRANSLATE_TEMP_FILENAME = '.polycodetmp'
 
 TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
 TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
+SERVER_URL = 'https://davidgu.stdlib.com/polycode@dev'
 
 
 def help():
@@ -38,9 +40,13 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     if os.path.isfile(map_file_path):
         with open(map_file_path) as f:
             map = f.read()
+            map = json.loads(map)
 
-    result = lib.davidgu.polycode['@dev'](doc=source,
-                                  config=json.dumps(config), map=map)
+    # result = lib_inst.davidgu.polycode['@dev'](source, config, map)
+    payload = {'doc': source, 'from': SOURCE_LANG, 'to': DEST_LANG, 'map': map}
+    req = requests.get(SERVER_URL, params=payload)
+    result = json.loads(req.text)
+
     translated = result['doc']
     translation_map = json.dumps(result['map'])
 
