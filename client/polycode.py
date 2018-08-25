@@ -32,8 +32,6 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     """
     Translate a specific file
     """
-    FUNCTION_CASE = config['function_case']
-    CLASS_CASE = config['class_case']
 
     with open(target_file) as f:
         source = f.read()
