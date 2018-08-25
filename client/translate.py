@@ -6,117 +6,117 @@ from lib import lib
 
 # Polyglot
 
-TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO = '.polycode'
-TRADUCIR_IGNORAR_NOMBRE_DE_ARCHIVO = '.polycodeignore'
+TRANSLATE_CONFIG_FILENAME = '.polycode'
+TRANSLATE_IGNORE_FILENAME = '.polycodeignore'
 
-PLANTILLA_DE_RUTA_DE_ARCHIVOS_TRADUCIDOS = 'repo-{}/'
-TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT = '.polycodedata/'
+TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
+TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
 
 
-def ayuda():
-    texto de ayuda = """
+def help():
+    helptext = """
     Usage: translate [--help] [Destination Language]
 
     Examples:
       translate build ES -> Builds current project into Spanish
       translate --f targetfile ES -> Translates file 'targetfile' into Spanish
     """
-    impresión(texto de ayuda)
+    print(helptext)
 
 
-def traducir_archivo(config, archivo_de_destino, DEST_LANG):
-    FUENTE_LANG = config['source_lang']
-    FUNDA_DE_FUNCIÓN = config['function_case']
-    CASO_DE_CLASE = config['class_case']
+def translate_file(config, target_file, DEST_LANG):
+    SOURCE_LANG = config['source_lang']
+    FUNCTION_CASE = config['function_case']
+    CLASS_CASE = config['class_case']
 
-    with abierto(archivo_de_destino) as f:
-        fuente = f.leer()
-    with abierto(TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT + '{}.{}{}.map'.formato(
-                os.camino.splitext(archivo_de_destino)[0],
+    with open(target_file) as f:
+        source = f.read()
+    with open(TRANSLATE_DICT_FILES_PATH + '{}.{}{}.map'.format(
+                os.path.splitext(target_file)[0],
                 DEST_LANG,
-                os.camino.splitext(archivo_de_destino)[-1])) as f:
-                mapa = f.leer()
+                os.path.splitext(target_file)[-1])) as f:
+                map = f.read()
 
-    resultado = lib.davidgu.polycode(doc=fuente,
-                                  config=json.deshecho(config), mapa=mapa)
-    traducido = resultado['doc']
-    mapa_de_traducción = json.deshecho(resultado['map'])
+    result = lib.davidgu.polycode(doc=source,
+                                  config=json.dumps(config), map=map)
+    translated = result['doc']
+    translation_map = json.dumps(result['map'])
 
     # If the file is being translated back to its original language,
     # write a file with no language extension
     if DEST_LANG == config['source_lang']:
-        nombre_de_archivo_traducido = '{}{}'.formato(
-            os.camino.splitext(os.camino.splitext(archivo_de_destino)[0])[0],
-            os.camino.splitext(archivo_de_destino)[-1])
-        ruta_de_archivo_traducida = nombre_de_archivo_traducido
+        translated_file_name = '{}{}'.format(
+            os.path.splitext(os.path.splitext(target_file)[0])[0],
+            os.path.splitext(target_file)[-1])
+        translated_file_path = translated_file_name
     else:
-        nombre_de_archivo_traducido = '{}.{}{}'.formato(
-            os.camino.splitext(archivo_de_destino)[0],
+        translated_file_name = '{}.{}{}'.format(
+            os.path.splitext(target_file)[0],
             DEST_LANG,
-            os.camino.splitext(archivo_de_destino)[-1])
-        ruta_de_archivo_traducida = PLANTILLA_DE_RUTA_DE_ARCHIVOS_TRADUCIDOS.formato(
-            DEST_LANG) + nombre_de_archivo_traducido
-    nombre_del_mapa_de_traducción = '{}.{}{}.map'.formato(
-        os.camino.splitext(archivo_de_destino)[0],
+            os.path.splitext(target_file)[-1])
+        translated_file_path = TRANSLATED_FILES_PATH_TEMPLATE.format(
+            DEST_LANG) + translated_file_name
+    translation_map_name = '{}.{}{}.map'.format(
+        os.path.splitext(target_file)[0],
         DEST_LANG,
-        os.camino.splitext(archivo_de_destino)[-1])
-    impresión(nombre_del_mapa_de_traducción)
-    ruta_del_mapa_de_traducción = TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT + nombre_del_mapa_de_traducción
+        os.path.splitext(target_file)[-1])
+    print(translation_map_name)
+    translation_map_path = TRANSLATE_DICT_FILES_PATH + translation_map_name
 
     # Write received files
-    with abierto(ruta_de_archivo_traducida, 'w+') as wf:
-        wf.escribir(traducido)
-    with abierto(ruta_del_mapa_de_traducción, 'w+') as wf:
-        wf.escribir(mapa_de_traducción)
+    with open(translated_file_path, 'w+') as wf:
+        wf.write(translated)
+    with open(translation_map_path, 'w+') as wf:
+        wf.write(translation_map)
 
 
-if __nombre__ == '__main__':
+if __name__ == '__main__':
     if len(sys.argv) is 1:
-        ayuda()
-        sys.salida()
+        help()
+        sys.exit()
 
     if '--help' in sys.argv:
-        ayuda()
-        sys.salida()
+        help()
+        sys.exit()
 
     # Create translation cache folder if it does not exist
-    if not os.camino.existe(TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT):
-        os.makedirs(TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT)
+    if not os.path.exists(TRANSLATE_DICT_FILES_PATH):
+        os.makedirs(TRANSLATE_DICT_FILES_PATH)
 
     if sys.argv[1] == 'build':
         # Load config file
-        if os.camino.isfile(TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO):
-            with abierto(TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO) as f:
-                config = json.carga(f)
+        if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
+            with open(TRANSLATE_CONFIG_FILENAME) as f:
+                config = json.load(f)
         else:
-            impresión("Error: No config file found!")
-            sys.salida()
+            print("Error: No config file found!")
+            sys.exit()
 
         # Load polycodeignore
-        ignorar_archivos = []
-        if os.camino.isfile(TRADUCIR_IGNORAR_NOMBRE_DE_ARCHIVO):
-            with abierto(TRADUCIR_IGNORAR_NOMBRE_DE_ARCHIVO) as f:
-                for línea in f:
-                    ignorar_archivos.adjuntar(línea)
+        ignore_files = []
+        if os.path.isfile(TRANSLATE_IGNORE_FILENAME):
+            with open(TRANSLATE_IGNORE_FILENAME) as f:
+                for line in f:
+                    ignore_files.append(line)
 
         DEST_LANG = sys.argv[2]
-        EXTENSIONES_DE_ARCHIVO_DE_DESTINO = config['target_file_extensions']
+        TARGET_FILE_EXTENSIONS = config['target_file_extensions']
 
         # Begin recursive folder walk in current directory
-        caminar_dir = os.camino.abspath('.')
-        archivos_de_destino = []
-        for raíz, subdivisiones, archivos in os.caminar(caminar_dir):
-            nombres de archivo = [os.camino.unirse(raíz, archivo) for archivo in archivos]
-            nombres de archivo = [os.camino.relpath(archivo) for archivo in nombres de archivo]
-            for ignorar in ignorar_archivos:
-                nombres de archivo = [norte for norte in nombres de archivo if not fnmatch(norte, ignorar)]
-            archivos_de_destino.ampliar(nombres de archivo)
+        walk_dir = os.path.abspath('.')
+        target_files = []
+        for root, subdirs, files in os.walk(walk_dir):
+            filenames = [os.path.join(root, file) for file in files]
+            filenames = [os.path.relpath(file) for file in filenames]
+            for ignore in ignore_files:
+                filenames = [n for n in filenames if not fnmatch(n, ignore)]
+            target_files.extend(filenames)
 
-        for archivo in archivos_de_destino:
-            if os.camino.splitext(archivo)[-1] in EXTENSIONES_DE_ARCHIVO_DE_DESTINO:
-                traducir_archivo(config, archivo, DEST_LANG)
+        for file in target_files:
+            if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
+                translate_file(config, file, DEST_LANG)
 
     if sys.argv[1] == '--f':
-        archivo_de_destino = sys.argv[2]
+        target_file = sys.argv[2]
         DEST_LANG = sys.argv[3]
-        traducir_archivo(config, archivo_de_destino, DEST_LANG)
+        translate_file(config, target_file, DEST_LANG)

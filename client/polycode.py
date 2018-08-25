@@ -2,22 +2,22 @@ import os
 import sys
 import json
 from fnmatch import fnmatch
-import peticiones
+import requests
 # from lib import lib as lib_inst
 
 # Polyglot
 
-TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO = '.polycode'
-TRADUCIR_IGNORAR_NOMBRE_DE_ARCHIVO = '.polycodeignore'
-TRADUCIR_NOMBRE_DE_ARCHIVO_TEMPORAL = '.polycodetmp'
+TRANSLATE_CONFIG_FILENAME = '.polycode'
+TRANSLATE_IGNORE_FILENAME = '.polycodeignore'
+TRANSLATE_TEMP_FILENAME = '.polycodetmp'
 
-PLANTILLA_DE_RUTA_DE_ARCHIVOS_TRADUCIDOS = 'repo-{}/'
-TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT = '.polycodedata/'
-URL_DEL_SERVIDOR = 'https://davidgu.stdlib.com/polycode@dev'
+TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
+TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
+SERVER_URL = 'https://davidgu.stdlib.com/polycode@dev'
 
 
-def ayuda():
-    texto de ayuda = """
+def help():
+    helptext = """
     Usage: polycode [--help] [Destination Language]
 
     Examples:
@@ -25,150 +25,152 @@ def ayuda():
       polycode translate ES -> Translates current project into Spanish
       polycode --f targetfile ES -> Translates file 'targetfile' into Spanish
     """
-    impresión(texto de ayuda)
+    print(helptext)
 
 
-def traducir_archivo(config, archivo_de_destino, FUENTE_LANG, DEST_LANG):
+def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     """
     Translate a specific file
     """
+    FUNCTION_CASE = config['function_case']
+    CLASS_CASE = config['class_case']
 
-    with abierto(archivo_de_destino) as f:
-        fuente = f.leer()
+    with open(target_file) as f:
+        source = f.read()
 
-    ruta_del_archivo_de_mapa = TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT + '{}.map'.formato(archivo_de_destino)
-    mapa = {}
-    if os.camino.isfile(ruta_del_archivo_de_mapa):
-        with abierto(ruta_del_archivo_de_mapa) as f:
-            mapa = f.leer()
-            mapa = json.cargas(mapa)
+    map_file_path = TRANSLATE_DICT_FILES_PATH + '{}.map'.format(target_file)
+    map = {}
+    if os.path.isfile(map_file_path):
+        with open(map_file_path) as f:
+            map = f.read()
+            map = json.loads(map)
 
     # result = lib_inst.davidgu.polycode['@dev'](source, config, map)
-    carga útil = {'doc': fuente, 'from': FUENTE_LANG, 'to': DEST_LANG, 'map': mapa}
-    req = peticiones.obtener(URL_DEL_SERVIDOR, params=carga útil)
-    resultado = json.cargas(req.texto)
+    payload = {'doc': source, 'from': SOURCE_LANG, 'to': DEST_LANG, 'map': map}
+    req = requests.get(SERVER_URL, params=payload)
+    result = json.loads(req.text)
 
-    traducido = resultado['doc']
-    mapa_de_traducción = json.deshecho(resultado['map'])
+    translated = result['doc']
+    translation_map = json.dumps(result['map'])
 
     # Translations overwrite the translated file
-    ruta_de_archivo_traducida = archivo_de_destino
-    ruta_del_mapa_de_traducción = ruta_del_archivo_de_mapa
+    translated_file_path = target_file
+    translation_map_path = map_file_path
 
     # Write received files
-    with abierto(ruta_de_archivo_traducida, 'w+') as wf:
-        wf.escribir(traducido)
-    with abierto(ruta_del_mapa_de_traducción, 'w+') as wf:
-        wf.escribir(mapa_de_traducción)
+    with open(translated_file_path, 'w+') as wf:
+        wf.write(translated)
+    with open(translation_map_path, 'w+') as wf:
+        wf.write(translation_map)
 
 
-def traducir_todo(config, DEST_LANG):
+def translate_all(config, DEST_LANG):
     """
     Translate all files, excluding those defined by the polycodeignore file
     """
     # Load polycodeignore
-    ignorar_archivos = []
-    if os.camino.isfile(TRADUCIR_IGNORAR_NOMBRE_DE_ARCHIVO):
-        with abierto(TRADUCIR_IGNORAR_NOMBRE_DE_ARCHIVO) as f:
-            for línea in f:
-                ignorar_archivos.adjuntar(línea)
+    ignore_files = []
+    if os.path.isfile(TRANSLATE_IGNORE_FILENAME):
+        with open(TRANSLATE_IGNORE_FILENAME) as f:
+            for line in f:
+                ignore_files.append(line)
 
-    EXTENSIONES_DE_ARCHIVO_DE_DESTINO = config['target_file_extensions']
+    TARGET_FILE_EXTENSIONS = config['target_file_extensions']
 
     # Begin recursive folder walk in current directory
-    caminar_dir = os.camino.abspath('.')
-    archivos_de_destino = []
-    for raíz, subdivisiones, archivos in os.caminar(caminar_dir):
-        nombres de archivo = [os.camino.unirse(raíz, archivo) for archivo in archivos]
-        nombres de archivo = [os.camino.relpath(archivo) for archivo in nombres de archivo]
-        for ignorar in ignorar_archivos:
-            nombres de archivo = [norte for norte in nombres de archivo if not fnmatch(norte, ignorar)]
-        archivos_de_destino.ampliar(nombres de archivo)
+    walk_dir = os.path.abspath('.')
+    target_files = []
+    for root, subdirs, files in os.walk(walk_dir):
+        filenames = [os.path.join(root, file) for file in files]
+        filenames = [os.path.relpath(file) for file in filenames]
+        for ignore in ignore_files:
+            filenames = [n for n in filenames if not fnmatch(n, ignore)]
+        target_files.extend(filenames)
 
     # Read current repo language from temp file if it exists. Else, assume that
     # translation has never been run and thus the language is the source lang
-    if os.camino.isfile(TRADUCIR_NOMBRE_DE_ARCHIVO_TEMPORAL):
-        with abierto(TRADUCIR_NOMBRE_DE_ARCHIVO_TEMPORAL) as f:
-            FUENTE_LANG = f.leer()
+    if os.path.isfile(TRANSLATE_TEMP_FILENAME):
+        with open(TRANSLATE_TEMP_FILENAME) as f:
+            SOURCE_LANG = f.read()
     else:
-        with abierto(TRADUCIR_NOMBRE_DE_ARCHIVO_TEMPORAL, 'w+') as f:
-            f.escribir(config['source_lang'])
-        FUENTE_LANG = config['source_lang']
+        with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
+            f.write(config['source_lang'])
+        SOURCE_LANG = config['source_lang']
 
-    for archivo in archivos_de_destino:
-        if os.camino.splitext(archivo)[-1] in EXTENSIONES_DE_ARCHIVO_DE_DESTINO:
-            traducir_archivo(config, archivo, FUENTE_LANG, DEST_LANG)
+    for file in target_files:
+        if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
+            translate_file(config, file, SOURCE_LANG, DEST_LANG)
 
-    with abierto(TRADUCIR_NOMBRE_DE_ARCHIVO_TEMPORAL, 'w+') as f:
-        f.escribir(DEST_LANG)
+    with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
+        f.write(DEST_LANG)
 
 
-def traducir():
+def translate():
     """
     Helper function performing all operations when command line arg 'translate'
     is called. Allows for no argument calling of translation function.
     """
     # Load config file
-    if os.camino.isfile(TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO):
-        with abierto(TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO) as f:
-            config = json.carga(f)
+    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
+        with open(TRANSLATE_CONFIG_FILENAME) as f:
+            config = json.load(f)
     else:
-        impresión("Error: No config file found!")
-        sys.salida()
+        print("Error: No config file found!")
+        sys.exit()
 
     DEST_LANG = sys.argv[2]
-    traducir_todo(config, DEST_LANG)
+    translate_all(config, DEST_LANG)
 
 
-def sin traducir():
+def untranslate():
     """
     Helper function performing all operations when command line arg
     'untranslate' is called. Allows for no argument calling of untranslation
     function.
     """
     # Load config file
-    if os.camino.isfile(TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO):
-        with abierto(TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO) as f:
-            config = json.carga(f)
+    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
+        with open(TRANSLATE_CONFIG_FILENAME) as f:
+            config = json.load(f)
     else:
-        impresión("Error: No config file found!")
-        sys.salida()
+        print("Error: No config file found!")
+        sys.exit()
 
-    FUENTE_LANG = config['source_lang']
-    traducir_todo(config, FUENTE_LANG)
+    SOURCE_LANG = config['source_lang']
+    translate_all(config, SOURCE_LANG)
 
 
-if __nombre__ == '__main__':
+if __name__ == '__main__':
     if len(sys.argv) is 1:
-        ayuda()
-        sys.salida()
+        help()
+        sys.exit()
 
     if '--help' in sys.argv:
-        ayuda()
-        sys.salida()
+        help()
+        sys.exit()
 
     # Load config file
-    if os.camino.isfile(TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO):
-        with abierto(TRADUCIR_CONFIG_NOMBRE_DE_ARCHIVO) as f:
-            config = json.carga(f)
+    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
+        with open(TRANSLATE_CONFIG_FILENAME) as f:
+            config = json.load(f)
     else:
-        impresión("Error: No config file found!")
-        sys.salida()
+        print("Error: No config file found!")
+        sys.exit()
 
     # Create translation cache folder if it does not exist
-    if not os.camino.existe(TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT):
-        os.makedirs(TRADUCIR_LA_RUTA_DE_LOS_ARCHIVOS_DICT)
+    if not os.path.exists(TRANSLATE_DICT_FILES_PATH):
+        os.makedirs(TRANSLATE_DICT_FILES_PATH)
 
     # Create translation temp file with default language if it does not exist
-    if not os.camino.isfile(TRADUCIR_NOMBRE_DE_ARCHIVO_TEMPORAL):
-        with abierto(TRADUCIR_NOMBRE_DE_ARCHIVO_TEMPORAL, 'w+') as f:
-            f.escribir(config['source_lang'])
+    if not os.path.isfile(TRANSLATE_TEMP_FILENAME):
+        with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
+            f.write(config['source_lang'])
 
     if sys.argv[1] == 'translate':
-        traducir()
+        translate()
 
     if sys.argv[1] == 'untranslate':
-        sin traducir()
+        untranslate()
 
     # if sys.argv[1] == '--f':
     #     target_file = sys.argv[2]
