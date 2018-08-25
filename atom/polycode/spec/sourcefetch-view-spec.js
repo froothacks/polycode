@@ -1,8 +1,8 @@
 'use babel';
 
-import AtomView from '../lib/atom-view';
+import polycodeView from '../lib/polycode-view';
 
-describe('AtomView', () => {
+describe('polycodeView', () => {
   it('has one valid test', () => {
     expect('life').toBe('easy');
   });

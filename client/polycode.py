@@ -53,7 +53,7 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     translated = result['doc']
     translation_map = json.dumps(result['map'])
 
-    # Translations overwrite the translated file 
+    # Translations overwrite the translated file
     translated_file_path = target_file
     translation_map_path = map_file_path
 
@@ -121,8 +121,8 @@ def translate():
 
 def untranslate():
     """
-    Helper function performing all operations when command line arg 
-    'untranslate' is called. Allows for no argument calling of untranslation 
+    Helper function performing all operations when command line arg
+    'untranslate' is called. Allows for no argument calling of untranslation
     function.
     """
     # Load config file

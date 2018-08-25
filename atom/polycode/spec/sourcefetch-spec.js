@@ -1,44 +1,44 @@
 'use babel';
 
-import Atom from '../lib/atom';
+import polycode from '../lib/polycode';
 
 // Use the command `window:run-package-specs` (cmd-alt-ctrl-p) to run specs.
 //
 // To run a specific `it` or `describe` block add an `f` to the front (e.g. `fit`
 // or `fdescribe`). Remove the `f` to unfocus the block.
 
-describe('Atom', () => {
+describe('polycode', () => {
   let workspaceElement, activationPromise;
 
   beforeEach(() => {
     workspaceElement = atom.views.getView(atom.workspace);
-    activationPromise = atom.packages.activatePackage('atom');
+    activationPromise = atom.packages.activatePackage('polycode');
   });
 
-  describe('when the atom:toggle event is triggered', () => {
+  describe('when the polycode:toggle event is triggered', () => {
     it('hides and shows the modal panel', () => {
       // Before the activation event the view is not on the DOM, and no panel
       // has been created
-      expect(workspaceElement.querySelector('.atom')).not.toExist();
+      expect(workspaceElement.querySelector('.polycode')).not.toExist();
 
       // This is an activation event, triggering it will cause the package to be
       // activated.
-      atom.commands.dispatch(workspaceElement, 'atom:toggle');
+      atom.commands.dispatch(workspaceElement, 'polycode:toggle');
 
       waitsForPromise(() => {
         return activationPromise;
       });
 
       runs(() => {
-        expect(workspaceElement.querySelector('.atom')).toExist();
+        expect(workspaceElement.querySelector('.polycode')).toExist();
 
-        let atomElement = workspaceElement.querySelector('.atom');
-        expect(atomElement).toExist();
+        let polycodeElement = workspaceElement.querySelector('.polycode');
+        expect(polycodeElement).toExist();
 
-        let atomPanel = atom.workspace.panelForItem(atomElement);
-        expect(atomPanel.isVisible()).toBe(true);
-        atom.commands.dispatch(workspaceElement, 'atom:toggle');
-        expect(atomPanel.isVisible()).toBe(false);
+        let polycodePanel = atom.workspace.panelForItem(polycodeElement);
+        expect(polycodePanel.isVisible()).toBe(true);
+        atom.commands.dispatch(workspaceElement, 'polycode:toggle');
+        expect(polycodePanel.isVisible()).toBe(false);
       });
     });
 
@@ -51,11 +51,11 @@ describe('Atom', () => {
       // workspaceElement to the DOM are generally slower than those off DOM.
       jasmine.attachToDOM(workspaceElement);
 
-      expect(workspaceElement.querySelector('.atom')).not.toExist();
+      expect(workspaceElement.querySelector('.polycode')).not.toExist();
 
       // This is an activation event, triggering it causes the package to be
       // activated.
-      atom.commands.dispatch(workspaceElement, 'atom:toggle');
+      atom.commands.dispatch(workspaceElement, 'polycode:toggle');
 
       waitsForPromise(() => {
         return activationPromise;
@@ -63,10 +63,10 @@ describe('Atom', () => {
 
       runs(() => {
         // Now we can test for view visibility
-        let atomElement = workspaceElement.querySelector('.atom');
-        expect(atomElement).toBeVisible();
-        atom.commands.dispatch(workspaceElement, 'atom:toggle');
-        expect(atomElement).not.toBeVisible();
+        let polycodeElement = workspaceElement.querySelector('.polycode');
+        expect(polycodeElement).toBeVisible();
+        atom.commands.dispatch(workspaceElement, 'polycode:toggle');
+        expect(polycodeElement).not.toBeVisible();
       });
     });
   });
