@@ -21,7 +21,7 @@ def help():
     Usage: polycode [--help] [Destination Language]
 
     Examples:
-      polycode build ES -> Builds Spanish project version into default lang
+      polycode untranslate
       polycode translate ES -> Translates current project into Spanish
       polycode --f targetfile ES -> Translates file 'targetfile' into Spanish
     """
@@ -29,6 +29,9 @@ def help():
 
 
 def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
+    """
+    Translate a specific file
+    """
     FUNCTION_CASE = config['function_case']
     CLASS_CASE = config['class_case']
 
@@ -61,6 +64,9 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
         wf.write(translation_map)
 
 def translate_all(config, DEST_LANG):
+    """
+    Translate all files, excluding those defined by the polycodeignore file
+    """
     # Load polycodeignore
     ignore_files = []
     if os.path.isfile(TRANSLATE_IGNORE_FILENAME):
@@ -91,6 +97,38 @@ def translate_all(config, DEST_LANG):
     with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
         f.write(DEST_LANG)
 
+def translate():
+    """
+    Helper function performing all operations when command line arg 'translate'
+    is called. Allows for no argument calling of translation function.
+    """
+    # Load config file
+    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
+        with open(TRANSLATE_CONFIG_FILENAME) as f:
+            config = json.load(f)
+    else:
+        print("Error: No config file found!")
+        sys.exit()
+
+    DEST_LANG = sys.argv[2]
+    translate_all(config, DEST_LANG)
+
+def untranslate():
+    """
+    Helper function performing all operations when command line arg 
+    'untranslate' is called. Allows for no argument calling of untranslation 
+    function.
+    """
+    # Load config file
+    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
+        with open(TRANSLATE_CONFIG_FILENAME) as f:
+            config = json.load(f)
+    else:
+        print("Error: No config file found!")
+        sys.exit()
+
+    SOURCE_LANG = config['source_lang']
+    translate_all(config, SOURCE_LANG)
 
 if __name__ == '__main__':
     if len(sys.argv) is 1:
@@ -119,12 +157,10 @@ if __name__ == '__main__':
             f.write(config['source_lang'])
 
     if sys.argv[1] == 'translate':
-        DEST_LANG = sys.argv[2]
-        translate_all(config, DEST_LANG)
+        translate()
 
-    if sys.argv[1] == 'build':
-        SOURCE_LANG = config['source_lang']
-        translate_all(config, SOURCE_LANG)
+    if sys.argv[1] == 'untranslate':
+        untranslate()
 
     # if sys.argv[1] == '--f':
     #     target_file = sys.argv[2]
