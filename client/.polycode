@@ -1,7 +1,5 @@
 {
     "source_lang":"EN",
-    "function_case":"pascal_case",
-    "class_case":"camel_case",
     "target_file_extensions":[
         ".py"
     ]
