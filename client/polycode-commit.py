@@ -13,6 +13,7 @@ def polycode_commit():
 	print('heree');
 	print(sys.argv);
 	# polycode.translate_all(config, SOURCE_LANG);
+	polycode.untranslate();
 	call(["git", " ".join(sys.argv[1:])], shell=True)
 
 if __name__ == '__main__':
