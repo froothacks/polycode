@@ -133,3 +133,6 @@ env.json
 
 # Nodejs
 node_modules/
+
+# JetBrains
+.idea
