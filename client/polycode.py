@@ -39,7 +39,7 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
         with open(map_file_path) as f:
             map = f.read()
 
-    result = lib.davidgu.polycode(doc=source,
+    result = lib.davidgu.polycode['@dev'](doc=source,
                                   config=json.dumps(config), map=map)
     translated = result['doc']
     translation_map = json.dumps(result['map'])
