@@ -1,0 +1,6 @@
+{
+    'source_lang':'EN',
+    'target_file_extensions':[
+        '.py',
+    ]
+}
