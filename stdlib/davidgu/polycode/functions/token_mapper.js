@@ -35,9 +35,6 @@ module.exports = async (tokens, from, to, map) => {
     map["tokens"].forEach(row => {row.add(null)});
   }
 
-  console.log("map")
-  console.log(map)
-
   for (let i = 0; i < tokens.length; i++) {
     let inDict = false;
     map["tokens"].forEach(row => {
@@ -69,7 +66,7 @@ module.exports = async (tokens, from, to, map) => {
       map["tokens"].push(row);
     }
   });
-  console.log("tokens", tokens);
+  
   return {"tokens": tokens, "map": map};
 
   function translateText(text, fromLanguage, toLanguage) {
