@@ -15,7 +15,9 @@ getTokensForLang = {
   "python": function(doc) {
     var tokens = [];
 
-    var nextToken = filbert.tokenize(doc);
+    docClean = doc.split("@").join(";");
+
+    var nextToken = filbert.tokenize(docClean);
 
     var t = nextToken();
     while (t["type"]["type"] !== "eof") {
