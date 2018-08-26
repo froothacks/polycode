@@ -40,6 +40,8 @@ def help():
       polycode untranslate
       polycode translate ES -> Translates current project into Spanish
       polycode --f targetfile ES -> Translates file 'targetfile' into Spanish
+      polycode define -w word -d newDef -l LANG -> Changes definition 'word' to 'newDef' for language 'LANG'. Language is optional and will default to your preferred output languages.
+      polycode definition -w word -l LANG -> Returns definition for 'word' for language 'LANG'. Language is optional and will default to your preferred output languages.
     """
     print(helptext)
 
@@ -61,7 +63,7 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
 
     # result = lib_inst.davidgu.polycode['@dev'](source, config, map)
 
-    payload = {'doc': source, 'from': SOURCE_LANG, 
+    payload = {'doc': source, 'from': SOURCE_LANG,
         'to': DEST_LANG, 'map': json.dumps(map)}
     # print(payload)
     # req = requests.get(SERVER_URL, params=payload)
@@ -159,10 +161,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('command', choices=['translate', 'untranslate',
         'commit', 'pull', 'define', 'definition', 'run', 'watch'])
-    parser.add_argument('-s', '--single-file', 
+    parser.add_argument('-s', '--single-file',
         type=str, help='Translate a single file instead of the whole project')
     parser.add_argument('-l', '--language', type=str,
         help='Specify the language to translate to.')
+    parser.add_argument('-w', '--word',
+        type=str, help='Define a word to define or get a definition of.')
+    parser.add_argument('-d', '--definition',
+        type=str, help='The new value of the specified word.')
     args = parser.parse_args()
 
     if args.command == 'translate':
@@ -190,7 +196,7 @@ if __name__ == '__main__':
                 f.write(json.dumps(tmp_data))
         else:
             translate_all(config, OUTPUT_LANG)
-    
+
     # Untranslate reverts all translated files to the project source lang
     if args.command == 'untranslate':
         # Accept single file flag to untranslate a specific file
@@ -200,7 +206,7 @@ if __name__ == '__main__':
 
         with open(TRANSLATE_TEMP_FILENAME, 'r+') as f:
             tmp_data = json.loads(f.read())
-            # If the current state of the entire repo is translated, store 
+            # If the current state of the entire repo is translated, store
             # the updated file under the single translated files. Otherwise,
             # if the untranslated file is an individually translated file,
             # remove it from the list of single translated files.
@@ -224,14 +230,14 @@ if __name__ == '__main__':
             if args.single_file:
                 # If the single file was specially translated, get it's current
                 # language from the temp file
-                
+
                 if args.single_file in st_filenames:
                     for file in st_files:
                         filename, file_lang = file.split(' ')
                         if args.single_file == filename:
-                            file_current_lang = file_lang 
+                            file_current_lang = file_lang
 
-                    # Untranslate that specific file and remove it from the 
+                    # Untranslate that specific file and remove it from the
                     # single_translated_files list
                     translate_file(config, filename, file_lang,
                         config['source_lang'])
@@ -240,10 +246,10 @@ if __name__ == '__main__':
                         if st_files[idx].split(' ')[0] == args.single_file:
                             st_files.remove(idx)
                             tmp_data['single_translated_files'] = st_files
-                            
+
                     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
                         f.write(json.dumps(tmp_data))
-                
+
                 # Else, it's current language is the whole repo language
                 else:
                     # Untranslate that specific file and mark it in the
@@ -259,9 +265,9 @@ if __name__ == '__main__':
             else:
                 # Untranslate every file that is not found in the
                 # single_translated_files list from the 'current_lang' to the
-                # 'source_lang'. Pass in single_translated_files list as 
+                # 'source_lang'. Pass in single_translated_files list as
                 # additional ignores
-                translate_all(config, config['source_lang'], 
+                translate_all(config, config['source_lang'],
                     st_filenames)
 
                 # Untranslate every file that is found in the
@@ -294,8 +300,8 @@ if __name__ == '__main__':
                     for file in st_files:
                         filename, file_lang = file.split(' ')
                         if args.single_file == filename:
-                            file_current_lang = file_lang 
-                    # Untranslate that specific file and remove it from the 
+                            file_current_lang = file_lang
+                    # Untranslate that specific file and remove it from the
                     # single_translated_files list
                     translate_file(config, filename, file_lang,
                         config['source_lang'])
@@ -304,13 +310,13 @@ if __name__ == '__main__':
                         if st_files[idx].split(' ')[0] == args.single_file:
                             st_files.pop(idx)
                             tmp_data['single_translated_files'] = st_files
-                            
+
                     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
                         f.write(json.dumps(tmp_data))
                 else:
                     print('Error: Target file has not yet been translated')
                     sys.exit()
-            
+
             else:
                 # Untranslate every file that is found in the
                 # single_translated_files list from their current lang to the
@@ -332,10 +338,55 @@ if __name__ == '__main__':
         pass
 
     if args.command == 'define':
-        pass
+        # Doesn't handle invalid args
+        word = args.word
+        definition = args.definition
+        from_lang = config['source_lang']
+        to_lang = args.language if args.language else pconfig['output_lang']
+
+        dictionary_path = 'test_dictionary.json'  # Fix this
+        json_data = json.loads(open(dictionary_path).read())
+        dictionary = json_data['tokens']
+        languages = json_data['languages']
+
+        # does not handle translating to unsupported languages
+        to_lang_idx = languages.index(to_lang)
+        from_lang_idx = languages.index(from_lang)
+        found = False
+        for i in range(len(dictionary)):
+            if found:
+                continue
+            if dictionary[i][from_lang_idx] == word:
+                dictionary[i][to_lang_idx] = definition
+                found = True
+
+        dict_file = open(dictionary_path, 'w')
+        dict_file.write(
+            json.dumps({
+                'languages': languages,
+                'tokens': dictionary
+            }, indent=2, ensure_ascii=False) # ascii false to prevent unicode escape characters
+        )
 
     if args.command == 'definition':
-        pass
+        word = args.word
+        from_lang = config['source_lang']
+        to_lang = args.language if args.language else pconfig['output_lang']
+
+        dictionary_path = 'test_dictionary.json'  # Fix this
+        json_data = json.loads(open(dictionary_path).read())
+        dictionary = json_data['tokens']
+        languages = json_data['languages']
+
+        to_lang_idx = languages.index(to_lang)
+        from_lang_idx = languages.index(from_lang)
+        found = False
+        for entry in dictionary:
+            if found:
+                continue
+            if entry[from_lang_idx] == word:
+                print("Word '%s' in '%s' is '%s'" % (word, to_lang, entry[to_lang_idx]))
+                found = True
 
     if args.command == 'run':
         pass

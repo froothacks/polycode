@@ -1,0 +1,24 @@
+{
+  "languages": [
+    "EN",
+    "FR",
+    "ZH"
+  ],
+  "tokens": [
+    [
+      "banana",
+      "banane",
+      "香蕉"
+    ],
+    [
+      "fish",
+      "y",
+      "fish in chinese"
+    ],
+    [
+      "banana_fish",
+      "banane_poisson",
+      "香蕉_鱼"
+    ]
+  ]
+}
