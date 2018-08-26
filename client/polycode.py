@@ -65,11 +65,12 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     payload = {'doc': source, 'from': SOURCE_LANG, 
         'to': DEST_LANG, 'map': json.dumps(map)}
     # print(payload)
-    # req = requests.get(SERVER_URL, params=payload)
-    # result = json.loads(req.text)
+    req = requests.get(SERVER_URL, params=payload)
+    # print(req.url)
+    result = json.loads(req.text)
 
     # Use fake backend for testing
-    result = json.loads(fake_backend(payload))
+    # result = json.loads(fake_backend(payload))
 
     translated = result['doc']
     translation_map = json.dumps(result['map'])
@@ -179,8 +180,8 @@ if __name__ == '__main__':
         # If a specific output language is specified, use it
         if args.language:
             OUTPUT_LANG = args.language
-            translate_file(config, args.single_file, config['source_lang'],
-                OUTPUT_LANG)
+        translate_file(config, args.single_file, config['source_lang'],
+            OUTPUT_LANG)
 
         # If a single file is specified, apply translation to that file
         if args.single_file:
