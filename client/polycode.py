@@ -340,10 +340,55 @@ if __name__ == '__main__':
         pass
 
     if args.command == 'define':
-        pass
+        # Doesn't handle invalid args
+        word = args.word
+        definition = args.definition
+        from_lang = config['source_lang']
+        to_lang = args.language if args.language else pconfig['output_lang']
+
+        dictionary_path = 'test_dictionary.json'  # Fix this
+        json_data = json.loads(open(dictionary_path).read())
+        dictionary = json_data['tokens']
+        languages = json_data['languages']
+
+        # does not handle translating to unsupported languages
+        to_lang_idx = languages.index(to_lang)
+        from_lang_idx = languages.index(from_lang)
+        found = False
+        for i in range(len(dictionary)):
+            if found:
+                continue
+            if dictionary[i][from_lang_idx] == word:
+                dictionary[i][to_lang_idx] = definition
+                found = True
+
+        dict_file = open(dictionary_path, 'w')
+        dict_file.write(
+            json.dumps({
+                'languages': languages,
+                'tokens': dictionary
+            }, indent=2, ensure_ascii=False)  # ascii false to prevent unicode escape characters
+        )
 
     if args.command == 'definition':
-        pass
+        word = args.word
+        from_lang = config['source_lang']
+        to_lang = args.language if args.language else pconfig['output_lang']
+
+        dictionary_path = 'test_dictionary.json'  # Fix this
+        json_data = json.loads(open(dictionary_path).read())
+        dictionary = json_data['tokens']
+        languages = json_data['languages']
+
+        to_lang_idx = languages.index(to_lang)
+        from_lang_idx = languages.index(from_lang)
+        found = False
+        for entry in dictionary:
+            if found:
+                continue
+            if entry[from_lang_idx] == word:
+                print("Word '%s' in '%s' is '%s'" % (word, to_lang, entry[to_lang_idx]))
+                found = True
 
     if args.command == 'run':
         pass
