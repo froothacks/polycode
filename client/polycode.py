@@ -258,10 +258,10 @@ if __name__ == '__main__':
                 else:
                     # Untranslate that specific file and mark it in the
                     # single_translated_files list
-                    translate_file(config, filename, tmp_data['current_lang'],
+                    translate_file(config, args.single_file, tmp_data['current_lang'],
                         config['source_lang'])
                     st_files.append('{} {}'.format(
-                        filename, config['source_lang']))
+                        args.single_file, config['source_lang']))
                     tmp_data['single_translated_files'] = st_files
                     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
                         f.write(json.dumps(tmp_data))
@@ -277,15 +277,11 @@ if __name__ == '__main__':
                 # Untranslate every file that is found in the
                 # single_translated_files list from their current lang to the
                 # 'source_lang'
-                #
-                # For files that have been individually translated back to the
-                # source_lang and thus marked in the list, translation will be
-                # attempted for source_lang -> source_lang and nothing will
-                # happen. This is intended behavior.
                 for file in st_files:
                     filename, file_current_lang = file.split(' ')
-                    translate_file(config, filename, file_current_lang,
-                        config['source_lang'])
+                    if file_current_lang != config['source_lang']:
+                        translate_file(config, filename, file_current_lang,
+                            config['source_lang'])
 
                 # Clear the list of specially translated files
                 tmp_data['single_translated_files'] = []
