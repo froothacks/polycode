@@ -44,48 +44,55 @@ module.exports = async (tokens, from, to, map) => {
       }
     });
     if (!inDict) {
-      var text = tokens[i].value;
-      if (!tokens[i]["isComment"]) {
-        Case.lower(text);
+      var value = tokens[i].value;
+      if (!tokens[i].isComment) {
+        value = Case.lower(value);
       }
-      allPromises.push(translateText(text, from, to));
+      allPromises.push(translateText(value, i, from, to));
     }
   }
-  const results = await Promise.all(allPromises);
-  results.forEach((item, i) => {
-    origToken = tokens[i].value;
-    
-    var text = item;
-    if (!tokens[i]["isComment"]) {
-      Case.lower(text);
+  var results = await Promise.all(allPromises);
+  results.forEach(result => {
+    token = tokens[result["index"]];
+    origValue = result["origValue"]
+    var translated = result["translated"];
+    if (!token.isComment) {
+      translated = Case[Case.of(origValue)](translated).split(" ").join("_");
     }
-    tokens[i].translated = Case[Case.of(origToken)](item).split(" ").join("_");
+    token.translated = translated;
+
+    // Update map with new language translation of a token that 
     var found = false;
-    for (var i = 0; i < map["tokens"].length; i++) {
-      if (map["tokens"][i][fromLangIdx] === origToken) {
-        map["tokens"][i][toLangIdx] = tokens[i].translated;
+    for (var j = 0; j < map["tokens"].length; j++) {
+      if (map["tokens"][j][fromLangIdx] === origValue) {
+        map["tokens"][j][toLangIdx] = translated;
         found = true;
         break;
       }
     }
     if (!found) {
+      // Completely new token: push new row
       row = new Array(map["languages"].length).fill(null);
-      row[fromLangIdx] = origToken;
-      row[toLangIdx] = tokens[i].translated;
+      row[fromLangIdx] = origValue;
+      row[toLangIdx] = translated;
       map["tokens"].push(row);
     }
   });
   
   return {"tokens": tokens, "map": map};
 
-  function translateText(text, fromLanguage, toLanguage) {
+  function translateText(value, index, fromLanguage, toLanguage) {
     return new Promise((resolve, reject) => {
-      googleTranslate.translate(text, fromLanguage, toLanguage, (err, translation) => {
+      googleTranslate.translate(value, fromLanguage, toLanguage, (err, translation) => {
         if (err !== null) {
           reject(err);
         }
         else {
-          resolve(translation.translatedText);
+          resolve({
+            "index": index,
+            "origValue": value,
+            "translated": translation.translatedText
+          });
         }
       });
     });
