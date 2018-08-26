@@ -59,11 +59,15 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
             map = json.loads(map)
 
     # result = lib_inst.davidgu.polycode['@dev'](source, config, map)
-    payload = {'doc': source, 'from': SOURCE_LANG, 
-        'to': DEST_LANG, 'map': json.dumps(map)}
-    print(payload)
-    req = requests.get(SERVER_URL, params=payload)
-    result = json.loads(req.text)
+
+    # payload = {'doc': source, 'from': SOURCE_LANG, 
+    #     'to': DEST_LANG, 'map': json.dumps(map)}
+    # print(payload)
+    # req = requests.get(SERVER_URL, params=payload)
+    # result = json.loads(req.text)
+
+    # Use fake backend for testing
+    result = json.loads(fake_backend())
 
     translated = result['doc']
     translation_map = json.dumps(result['map'])
@@ -123,27 +127,6 @@ def translate_all(config, DEST_LANG, additional_ignores=[]):
         tmp_data['current_lang'] = DEST_LANG
         f.write(json.dumps(tmp_data))
 
-def untranslate():
-    """
-    Helper function performing all operations when command line arg
-    'untranslate' is called. Allows for no argument calling of untranslation
-    function.
-
-    Loops through every non ignored file in the current folder and translates
-    them back from the current repo language to the project source language
-    """
-    # Load config file
-    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
-        with open(TRANSLATE_CONFIG_FILENAME) as f:
-            config = json.load(f)
-    else:
-        print("Error: No config file found!")
-        sys.exit()
-
-    SOURCE_LANG = config['source_lang']
-    translate_all(config, SOURCE_LANG)
-
-
 if __name__ == '__main__':
     # Load project config file
     if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
@@ -192,14 +175,18 @@ if __name__ == '__main__':
         # If a single file is specified, apply translation to that file
         if args.single_file:
             # Remember translated file in temporary file
-            with open(TRANSLATE_TEMP_FILENAME, 'r+') as f:
+            with open(TRANSLATE_TEMP_FILENAME, 'r') as f:
                 tmp_data = json.loads(f.read())
                 if 'single_translated_files' in tmp_data:
-                    tmp_data['single_translated_files'].append(
-                        '{} {}'.format(args.single_file, OUTPUT_LANG))
+                    # Only add the file to the list of singly translated files if it is not already in there
+                    if args.single_file not in [x.split(' ')[0] for x in tmp_data['single_translated_files']]:
+                        tmp_data['single_translated_files'].append(
+                            '{} {}'.format(args.single_file, OUTPUT_LANG))
                 else:
                     tmp_data['single_translated_files'] = [
                         '{} {}'.format(args.single_file, OUTPUT_LANG)]
+            with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
+                f.write(json.dumps(tmp_data))
         else:
             translate_all(config, OUTPUT_LANG)
     
@@ -223,13 +210,14 @@ if __name__ == '__main__':
             # If the whole repo is translated and the file is individually
             # translated to the source lang, fail with an error message
 
+        # Get the singly translated files and filenames
+        st_files = tmp_data['single_translated_files']
+        st_filenames = [x.split(' ')[0] for x in st_files]
+
         # Check whole repo translation state
         if tmp_data['current_lang'] != config['source_lang']:
             # The whole repo has been translated
 
-            # Get the singly translated files and filenames
-            st_files = tmp_data['single_translated_files']
-            st_filenames = [x.split(' ')[0] for x in st_files]
 
             # Check if a single file is specified
             if args.single_file:
@@ -313,7 +301,7 @@ if __name__ == '__main__':
 
                     for idx in range(len(st_files)):
                         if st_files[idx].split(' ')[0] == args.single_file:
-                            st_files.remove(idx)
+                            st_files.pop(idx)
                             tmp_data['single_translated_files'] = st_files
                             
                     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
