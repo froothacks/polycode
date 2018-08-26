@@ -64,7 +64,7 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
 
     fextension = os.path.splitext(target_file)[1]
 
-    payload = {'doc': source, 'from': SOURCE_LANG, 
+    payload = {'doc': source, 'from': SOURCE_LANG,
         'to': DEST_LANG, 'map': json.dumps(map), 'ext':fextension}
     # print(payload)
     req = requests.get(SERVER_URL, params=payload)
@@ -171,14 +171,14 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('command', choices=['translate', 'untranslate',
-        'commit', 'pull', 'define', 'definition', 'run', 'watch'])
-    parser.add_argument('-s', '--single-file', 
+        'commit', 'pull', 'define', 'definition', 'python', 'node', 'flask'])
+    parser.add_argument('-s', '--single-file',
         type=str, help='Translate a single file instead of the whole project')
     parser.add_argument('-l', '--language', type=str,
         help='Specify the language to translate to.')
-    parser.add_argument('-w', '--word', type=str, 
+    parser.add_argument('-w', '--word', type=str,
         help='Define a word to define or get a definition of.')
-    parser.add_argument('-d', '--definition', type=str, 
+    parser.add_argument('-d', '--definition', type=str,
         help='The new value of the specified word.')
     args = parser.parse_args()
 
@@ -207,7 +207,7 @@ def main():
                 f.write(json.dumps(tmp_data))
         else:
             translate_all(config, OUTPUT_LANG)
-    
+
     # Untranslate reverts all translated files to the project source lang
     if args.command == 'untranslate':
         # Accept single file flag to untranslate a specific file
@@ -217,7 +217,7 @@ def main():
 
         with open(TRANSLATE_TEMP_FILENAME, 'r+') as f:
             tmp_data = json.loads(f.read())
-            # If the current state of the entire repo is translated, store 
+            # If the current state of the entire repo is translated, store
             # the updated file under the single translated files. Otherwise,
             # if the untranslated file is an individually translated file,
             # remove it from the list of single translated files.
@@ -243,14 +243,14 @@ def main():
             if args.single_file:
                 # If the single file was specially translated, get it's current
                 # language from the temp file
-                
+
                 if args.single_file in st_filenames:
                     for file in st_files:
                         filename, file_lang = file.split(' ')
                         if args.single_file == filename:
-                            file_current_lang = file_lang 
+                            file_current_lang = file_lang
 
-                    # Untranslate that specific file and remove it from the 
+                    # Untranslate that specific file and remove it from the
                     # single_translated_files list
                     translate_file(config, filename, file_lang,
                         config['source_lang'])
@@ -259,10 +259,10 @@ def main():
                         if st_files[idx].split(' ')[0] == args.single_file:
                             st_files.remove(idx)
                             tmp_data['single_translated_files'] = st_files
-                            
+
                     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
                         f.write(json.dumps(tmp_data))
-                
+
                 else:
                     # Untranslate that specific file and mark it in the
                     # single_translated_files list
@@ -277,9 +277,9 @@ def main():
             else:
                 # Untranslate every file that is not found in the
                 # single_translated_files list from the 'current_lang' to the
-                # 'source_lang'. Pass in single_translated_files list as 
+                # 'source_lang'. Pass in single_translated_files list as
                 # additional ignores
-                translate_all(config, config['source_lang'], 
+                translate_all(config, config['source_lang'],
                     st_filenames)
 
                 # Untranslate every file that is found in the
@@ -310,8 +310,8 @@ def main():
                     for file in st_files:
                         filename, file_lang = file.split(' ')
                         if args.single_file == filename:
-                            file_current_lang = file_lang 
-                    # Untranslate that specific file and remove it from the 
+                            file_current_lang = file_lang
+                    # Untranslate that specific file and remove it from the
                     # single_translated_files list
                     translate_file(config, filename, file_lang,
                         config['source_lang'])
@@ -320,13 +320,13 @@ def main():
                         if st_files[idx].split(' ')[0] == args.single_file:
                             st_files.pop(idx)
                             tmp_data['single_translated_files'] = st_files
-                            
+
                     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
                         f.write(json.dumps(tmp_data))
                 else:
                     print('Error: Target file has not yet been translated')
                     sys.exit()
-            
+
             else:
                 # Untranslate every file that is found in the
                 # single_translated_files list from their current lang to the
@@ -407,6 +407,99 @@ def main():
 
     if args.command == 'watch':
         pass
+
+    if args.command == 'python':
+        SOURCE_LANG = config['source_lang']
+        DEST_LANG = args.language if args.language else pconfig['output_lang']
+
+        target_file = args.single_file
+
+        with codecs.open(target_file, "r", "utf-8") as f:
+            source = f.read()
+
+        map_file_path = TRANSLATE_DICT_FILES_PATH + '{}.map'.format(target_file)
+        map = {}
+        if os.path.isfile(map_file_path):
+            with open(map_file_path) as f:
+                map = f.read()
+                map = json.loads(map)
+
+        fextension = os.path.splitext(target_file)[1]
+
+        payload = {'doc': source, 'from': SOURCE_LANG,
+            'to': DEST_LANG, 'map': json.dumps(map), 'ext':fextension}
+        # print(payload)
+        req = requests.get(SERVER_URL, params=payload)
+        # print(req.url)
+        result = json.loads(req.text)
+
+        translated = result['doc'].replace('"', "'")
+        print (translated)
+        os.system('python -c "' + translated + '"')
+
+    if args.command == 'flask':
+        SOURCE_LANG = config['source_lang']
+        DEST_LANG = args.language if args.language else pconfig['output_lang']
+
+        target_file = args.single_file
+
+        with codecs.open(target_file, "r", "utf-8") as f:
+            source = f.read()
+
+        map_file_path = TRANSLATE_DICT_FILES_PATH + '{}.map'.format(target_file)
+        map = {}
+        if os.path.isfile(map_file_path):
+            with open(map_file_path) as f:
+                map = f.read()
+                map = json.loads(map)
+
+        fextension = os.path.splitext(target_file)[1]
+
+        payload = {'doc': source, 'from': SOURCE_LANG,
+            'to': DEST_LANG, 'map': json.dumps(map), 'ext':fextension}
+        # print(payload)
+        req = requests.get(SERVER_URL, params=payload)
+        # print(req.url)
+        result = json.loads(req.text)
+
+        translated = result['doc'].replace('"', "'")
+
+        with open('tmp.py', 'w') as f:
+            f.write(translated)
+        os.system('export FLASK_APP=tmp.py && flask run')
+        os.remove("tmp.py")
+
+    if args.command == 'node':
+        SOURCE_LANG = config['source_lang']
+        DEST_LANG = args.language if args.language else pconfig['output_lang']
+
+        target_file = args.single_file
+
+        with codecs.open(target_file, "r", "utf-8") as f:
+            source = f.read()
+
+        map_file_path = TRANSLATE_DICT_FILES_PATH + '{}.map'.format(target_file)
+        map = {}
+        if os.path.isfile(map_file_path):
+            with open(map_file_path) as f:
+                map = f.read()
+                map = json.loads(map)
+
+        fextension = os.path.splitext(target_file)[1]
+
+        payload = {'doc': source, 'from': SOURCE_LANG,
+            'to': DEST_LANG, 'map': json.dumps(map), 'ext':fextension}
+        # print(payload)
+        req = requests.get(SERVER_URL, params=payload)
+        # print(req.url)
+        result = json.loads(req.text)
+
+        translated = result['doc'].replace('"', "'")
+
+        with open('tmp.js', 'w') as f:
+            f.write(translated)
+        os.system('node tmp.js')
+        os.remove("tmp.js")
 
 if __name__ == '__main__':
     main()
