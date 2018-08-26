@@ -121,24 +121,6 @@ def translate_all(config, DEST_LANG, additional_ignores=[]):
         tmp_data['current_lang'] = DEST_LANG
         f.write(json.dumps(tmp_data))
 
-
-def translate():
-    """
-    Helper function performing all operations when command line arg 'translate'
-    is called. Allows for no argument calling of translation function.
-    """
-    # Load config file
-    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
-        with open(TRANSLATE_CONFIG_FILENAME) as f:
-            config = json.load(f)
-    else:
-        print("Error: No config file found!")
-        sys.exit()
-
-    DEST_LANG = sys.argv[2]
-    translate_all(config, DEST_LANG)
-
-
 def untranslate():
     """
     Helper function performing all operations when command line arg
