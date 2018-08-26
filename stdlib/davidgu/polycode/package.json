@@ -9,7 +9,7 @@
     "acorn-jsx": "^4.1.1",
     "case": "^1.5.5",
     "filbert": "^0.1.20",
-    "google-translate-api": "^2.3.0",
+    "google-translate": "^2.2.0",
     "lib": "^3.0.2"
   },
   "private": true,
