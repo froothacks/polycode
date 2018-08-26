@@ -17,7 +17,8 @@ TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
 TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
 SERVER_URL = 'https://davidgu.stdlib.com/polycode@dev'
 
-def fake_backend():
+def fake_backend(payload):
+    print(payload)
     return json.dumps({
         'doc':'This is a source code file that would be translated',
         'map':{
@@ -60,14 +61,14 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
 
     # result = lib_inst.davidgu.polycode['@dev'](source, config, map)
 
-    # payload = {'doc': source, 'from': SOURCE_LANG, 
-    #     'to': DEST_LANG, 'map': json.dumps(map)}
+    payload = {'doc': source, 'from': SOURCE_LANG, 
+        'to': DEST_LANG, 'map': json.dumps(map)}
     # print(payload)
     # req = requests.get(SERVER_URL, params=payload)
     # result = json.loads(req.text)
 
     # Use fake backend for testing
-    result = json.loads(fake_backend())
+    result = json.loads(fake_backend(payload))
 
     translated = result['doc']
     translation_map = json.dumps(result['map'])
