@@ -50,7 +50,7 @@ module.exports = async (tokens, from, to, map) => {
   const results = await Promise.all(allPromises);
   results.forEach((item, i) => {
     origToken = tokens[i].value;
-    tokens[i].translated = Case[Case.of(origToken)](item);
+    tokens[i].translated = Case[Case.of(origToken)](item).split(" ").join("_");
     var found = false;
     for (var i = 0; i < map["tokens"].length; i++) {
       if (map["tokens"][i][fromLangIdx] === origToken) {
