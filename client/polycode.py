@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import argparse
 from fnmatch import fnmatch
 import requests
 # from lib import lib as lib_inst
@@ -10,6 +11,7 @@ import requests
 TRANSLATE_CONFIG_FILENAME = '.polycode'
 TRANSLATE_IGNORE_FILENAME = '.polycodeignore'
 TRANSLATE_TEMP_FILENAME = '.polycodetmp'
+TRANSLATE_PERSONAL_CONFIG_FILEPATH = '~/.polycode'
 
 TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
 TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
@@ -89,18 +91,22 @@ def translate_all(config, DEST_LANG):
     # translation has never been run and thus the language is the source lang
     if os.path.isfile(TRANSLATE_TEMP_FILENAME):
         with open(TRANSLATE_TEMP_FILENAME) as f:
-            SOURCE_LANG = f.read()
+            tmp_data = json.loads(f.read())
+            SOURCE_LANG = tmp_data['current_lang']
     else:
         with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
-            f.write(config['source_lang'])
+            tmp_data = {'current_lang':config['source_lang']}
+            f.write(json.dumps(tmp_data))
         SOURCE_LANG = config['source_lang']
 
     for file in target_files:
         if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
             translate_file(config, file, SOURCE_LANG, DEST_LANG)
 
-    with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
-        f.write(DEST_LANG)
+    with open(TRANSLATE_TEMP_FILENAME, 'rw') as f:
+        tmp_data = json.loads(f.read())
+        tmp_data['current_lang'] = DEST_LANG
+        f.write(json.dumps(tmp_data))
 
 
 def translate():
@@ -139,20 +145,21 @@ def untranslate():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) is 1:
-        help()
-        sys.exit()
-
-    if '--help' in sys.argv:
-        help()
-        sys.exit()
-
-    # Load config file
+    # Load project config file
     if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
         with open(TRANSLATE_CONFIG_FILENAME) as f:
             config = json.load(f)
     else:
         print("Error: No config file found!")
+        sys.exit()
+
+    # Load personal config file
+    if os.path.isfile(os.path.expanduser(TRANSLATE_PERSONAL_CONFIG_FILEPATH)):
+        with open(os.path.expanduser(TRANSLATE_PERSONAL_CONFIG_FILEPATH)) as f:
+            pconfig = json.load(f)
+    else:
+        print("Error: No personal config file found at {} !".format(
+            os.path.expanduser(TRANSLATE_PERSONAL_CONFIG_FILEPATH)))
         sys.exit()
 
     # Create translation cache folder if it does not exist
@@ -162,15 +169,59 @@ if __name__ == '__main__':
     # Create translation temp file with default language if it does not exist
     if not os.path.isfile(TRANSLATE_TEMP_FILENAME):
         with open(TRANSLATE_TEMP_FILENAME, 'w+') as f:
-            f.write(config['source_lang'])
+            tmp_data = {'current_lang':config['source_lang']}
+            f.write(json.dumps(tmp_data))
 
-    if sys.argv[1] == 'translate':
-        translate()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('command', choices=['translate', 'untranslate',
+        'commit', 'pull', 'define', 'definition', 'run', 'watch'])
+    parser.add_argument('-s', '--single-file', 
+        type=str, help='Translate a single file instead of the whole project')
+    parser.add_argument('-l', '--language', type=str,
+        help='Specify the language to translate to.')
+    args = parser.parse_args()
 
-    if sys.argv[1] == 'untranslate':
+    if args.command == 'translate':
+        # If a single file is specified, apply translation to that file
+        if args.single_file:
+            OUTPUT_LANG = pconfig['output_lang']
+            # If a specific output language is specified, use it
+            if args.language:
+                OUTPUT_LANG = args.language
+            translate_file(config, args.single_file, config['source_lang'],
+                OUTPUT_LANG)
+            # Remember translated file in temporary file
+            with open(TRANSLATE_TEMP_FILENAME, 'rw') as f:
+                tmp_data = json.loads(f.read())
+                if 'single_translated_files' in tmp_data:
+                    tmp_data['single_translated_files'].append(
+                        '{} {}'.format(args.single_file, OUTPUT_LANG))
+                else:
+                    tmp_data['single_translated_files'] = [
+                        '{} {}'.format(args.single_file, OUTPUT_LANG)]
+        else:
+            translate()
+    
+    # Untranslate reverts all translated files to the project source lang
+    if args.command == 'untranslate':
+        # TODO: Check for the existence of single translated files, and 
+        # translate those individually
         untranslate()
 
-    # if sys.argv[1] == '--f':
-    #     target_file = sys.argv[2]
-    #     DEST_LANG = sys.argv[3]
-    #     translate_file(config, target_file, DEST_LANG)
+    if args.command == 'commit':
+        pass
+
+    if args.command == 'pull':
+        pass
+
+    if args.command == 'define':
+        pass
+
+    if args.command == 'definition':
+        pass
+
+    if args.command == 'run':
+        pass
+
+    if args.command == 'watch':
+        pass
