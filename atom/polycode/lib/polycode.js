@@ -23,12 +23,12 @@ export default {
   translate() {
     console.log(`cd ${atom.project.rootDirectories[0].path}/ && python3 sample.py`)
     execSync(`cd ${atom.project.rootDirectories[0].path}/ && python3 temp.py`);
-    // atom.notifications.addSuccess('Translated your code!')
+    atom.notifications.addSuccess('Translated your code!')
   },
 
 
   untranslate() {
     console.log("untranslating")
-    // atom.notifications.addSuccess('Returned files to the original language!')
+    atom.notifications.addSuccess('Returned files to the original language!')
   }
 };
