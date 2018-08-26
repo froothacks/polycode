@@ -7,8 +7,8 @@ const lib = require("lib");
 * @param {object} map
 * @returns {any} 
 */
-module.exports = async (doc, from="EN", to="FR", map={}, context) => {
-  var tokens = await lib[`${context.service.identifier}.get_tokens`](doc);
+module.exports = async (doc, from="EN", to="FR", map={}, scriptlang="python", context) => {
+  var tokens = await lib[`${context.service.identifier}.get_tokens`](doc, scriptlang);
   var result = await lib[`${context.service.identifier}.token_mapper`](tokens, from, to, map);
   tokens = result["tokens"];
   map = result["map"];
