@@ -414,13 +414,26 @@ module.exports = async (tokens, from, to, map) => {
       }
     });
     if (!inDict) {
-      allPromises.push(translateText(Case.lower(tokens[i].value), from, to));
+      var text = tokens[i].value;
+      if (!tokens[i]["isComment"]) {
+        Case.lower(text);
+      }
+      allPromises.push(translateText(text, from, to));
     }
   }
   const results = await Promise.all(allPromises);
   results.forEach((item, i) => {
     origToken = tokens[i].value;
+<<<<<<< HEAD
     tokens[i].translated = Case[Case.of(origToken)](item.text).split(" ").join("_");
+=======
+    
+    var text = item;
+    if (!tokens[i]["isComment"]) {
+      Case.lower(text);
+    }
+    tokens[i].translated = Case[Case.of(origToken)](item).split(" ").join("_");
+>>>>>>> local
     var found = false;
     for (var i = 0; i < map["tokens"].length; i++) {
       if (map["tokens"][i][fromLangIdx] === origToken) {
