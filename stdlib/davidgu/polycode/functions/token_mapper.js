@@ -1,4 +1,4 @@
-const googleTranslate = require('google-translate')(process.env.apiKey);
+const translate = require('google-translate-api');
 const lib = require('lib');
 const Case = require('case');
 
@@ -50,7 +50,7 @@ module.exports = async (tokens, from, to, map) => {
   const results = await Promise.all(allPromises);
   results.forEach((item, i) => {
     origToken = tokens[i].value;
-    tokens[i].translated = Case[Case.of(origToken)](item).split(" ").join("_");
+    tokens[i].translated = Case[Case.of(origToken)](item.text).split(" ").join("_");
     var found = false;
     for (var i = 0; i < map["tokens"].length; i++) {
       if (map["tokens"][i][fromLangIdx] === origToken) {
@@ -70,15 +70,6 @@ module.exports = async (tokens, from, to, map) => {
   return {"tokens": tokens, "map": map};
 
   function translateText(text, fromLanguage, toLanguage) {
-    return new Promise((resolve, reject) => {
-      googleTranslate.translate(text, fromLanguage, toLanguage, (err, translation) => {
-        if (err !== null) {
-          reject(err);
-        }
-        else {
-          resolve(translation.translatedText);
-        }
-      });
-    });
+      return (translate(text, {from: fromLanguage, to: toLanguage}));
   }
 };
