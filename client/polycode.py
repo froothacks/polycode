@@ -17,6 +17,19 @@ TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
 TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
 SERVER_URL = 'https://davidgu.stdlib.com/polycode@dev'
 
+def fake_backend():
+    return json.dumps({
+        'doc':'This is a source code file that would be translated',
+        'map':{
+            "languages": ["EN", "FR", "ZH"],
+            "tokens": [
+                ["banana", "banane", "香蕉"],
+                ["fish", "poisson", "鱼"],
+                ["banana_fish", "banane_poisson", "香蕉_鱼"]
+            ]
+        }
+    })
+
 
 def help():
     helptext = """
