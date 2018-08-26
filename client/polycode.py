@@ -19,7 +19,7 @@ TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
 SERVER_URL = 'https://davidgu.stdlib.com/polycode@dev'
 
 def fake_backend(payload):
-    print(payload)
+    # print(payload)
     return json.dumps({
         'doc':'This is a source code file that would be translated',
         'map':{
@@ -79,9 +79,17 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     translation_map_path = map_file_path
 
     # Write received files
-    with codecs.open(translated_file_path, "w", "utf-8") as wf:
+    with codecs.open(translated_file_path, "w+", "utf-8") as wf:
         wf.write(translated)
-    with codecs.open(translation_map_path, "w", "utf-8") as wf:
+
+    # Create directories for translation maps if they do not exist
+    if not os.path.exists(os.path.dirname(translation_map_path)):
+        try:
+            os.makedirs(os.path.dirname(translation_map_path))
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+    with codecs.open(translation_map_path, "w+", "utf-8") as wf:
         wf.write(translation_map)
 
 
@@ -94,8 +102,7 @@ def translate_all(config, DEST_LANG, additional_ignores=[]):
     if os.path.isfile(TRANSLATE_IGNORE_FILENAME):
         with open(TRANSLATE_IGNORE_FILENAME) as f:
             for line in f:
-                ignore_files.append(line)
-
+                ignore_files.append(line.strip())
     TARGET_FILE_EXTENSIONS = config['target_file_extensions']
 
     # Begin recursive folder walk in current directory
@@ -127,6 +134,7 @@ def translate_all(config, DEST_LANG, additional_ignores=[]):
     with open(TRANSLATE_TEMP_FILENAME, 'r+') as f:
         tmp_data = json.loads(f.read())
         tmp_data['current_lang'] = DEST_LANG
+    with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
         f.write(json.dumps(tmp_data))
 
 if __name__ == '__main__':
@@ -171,8 +179,8 @@ if __name__ == '__main__':
         # If a specific output language is specified, use it
         if args.language:
             OUTPUT_LANG = args.language
-        translate_file(config, args.single_file, config['source_lang'],
-            OUTPUT_LANG)
+            translate_file(config, args.single_file, config['source_lang'],
+                OUTPUT_LANG)
 
         # If a single file is specified, apply translation to that file
         if args.single_file:
