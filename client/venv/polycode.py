@@ -43,6 +43,7 @@ def help():
       polycode --f targetfile ES -> Translates file 'targetfile' into Spanish
       polycode define -w word -d newDef -l LANG -> Changes definition 'word' to 'newDef' for language 'LANG'. Language is optional and will default to your preferred output languages.
       polycode definition -w word -l LANG -> Returns definition for 'word' for language 'LANG'. Language is optional and will default to your preferred output languages.
+      polycode python -f file -> Run the translated file.
     """
     print(helptext)
 
@@ -162,7 +163,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('command', choices=['translate', 'untranslate',
-                        'commit', 'pull', 'define', 'definition', 'run', 'watch'])
+                        'commit', 'pull', 'define', 'definition', 'python', 'flask', 'node'])
     parser.add_argument('-s', '--single-file',
                         type=str, help='Translate a single file instead of the whole project')
     parser.add_argument('-l', '--language', type=str,
@@ -389,8 +390,49 @@ if __name__ == '__main__':
                 print("Word '%s' in '%s' is '%s'" % (word, to_lang, entry[to_lang_idx]))
                 found = True
 
-    if args.command == 'run':
-        pass
+    if args.command == 'python':
+        # with open('target_file') as f:
+        #     source = f.read()
+
+        translated_code = "print('wew')"
+        os.system('python -c """' + translated_code + "\"\"\"")
+
+    if args.command == 'flask':
+        # with open('target_file') as f:
+        #     source = f.read()
+
+        translated_code = """
+from flask import Flask
+app = Flask(__name__)
+
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+        """
+        with open('tmp.py', 'w') as f:
+            f.write(translated_code)
+        os.system('export FLASK_APP=tmp.py && flask run')
+        os.remove("tmp.py")
+
+    if args.command == 'node':
+        # with open('target_file') as f:
+        #     source = f.read()
+
+        translated_code = """
+var http = require('http');
+
+var server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Hi everybody!');
+});
+server.listen(8080);
+        """
+        with open('tmp.js', 'w') as f:
+            f.write(translated_code)
+        os.system('node tmp.js')
+        os.remove("tmp.js")
+
 
     if args.command == 'watch':
         pass
