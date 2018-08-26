@@ -62,8 +62,10 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
 
     # result = lib_inst.davidgu.polycode['@dev'](source, config, map)
 
+    fextension = os.path.splitext(target_file)[1]
+
     payload = {'doc': source, 'from': SOURCE_LANG, 
-        'to': DEST_LANG, 'map': json.dumps(map)}
+        'to': DEST_LANG, 'map': json.dumps(map), 'ext':fextension}
     # print(payload)
     req = requests.get(SERVER_URL, params=payload)
     # print(req.url)
@@ -130,7 +132,7 @@ def translate_all(config, DEST_LANG, additional_ignores=[]):
 
     for file in target_files:
         if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
-            # translate_file(config, file, SOURCE_LANG, DEST_LANG)
+            translate_file(config, file, SOURCE_LANG, DEST_LANG)
             print(file)
 
     with open(TRANSLATE_TEMP_FILENAME, 'r+') as f:
