@@ -221,7 +221,9 @@ if __name__ == '__main__':
             # translated to the source lang, fail with an error message
 
         # Get the singly translated files and filenames
-        st_files = tmp_data['single_translated_files']
+        st_files = []
+        if 'single_translated_files' in tmp_data:
+            st_files = tmp_data['single_translated_files']
         st_filenames = [x.split(' ')[0] for x in st_files]
 
         # Check whole repo translation state
@@ -253,7 +255,6 @@ if __name__ == '__main__':
                     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
                         f.write(json.dumps(tmp_data))
                 
-                # Else, it's current language is the whole repo language
                 else:
                     # Untranslate that specific file and mark it in the
                     # single_translated_files list
@@ -288,6 +289,8 @@ if __name__ == '__main__':
 
                 # Clear the list of specially translated files
                 tmp_data['single_translated_files'] = []
+                # Change the repo language back to the source
+                tmp_data['current_lang'] = config['source_lang']
                 with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
                     f.write(json.dumps(tmp_data))
         else:
