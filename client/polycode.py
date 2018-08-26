@@ -138,7 +138,7 @@ def translate_all(config, DEST_LANG, additional_ignores=[]):
     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
         f.write(json.dumps(tmp_data))
 
-if __name__ == '__main__':
+def main():
     # Load project config file
     if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
         with open(TRANSLATE_CONFIG_FILENAME) as f:
@@ -396,3 +396,6 @@ if __name__ == '__main__':
 
     if args.command == 'watch':
         pass
+
+if __name__ == '__main__':
+    main()
