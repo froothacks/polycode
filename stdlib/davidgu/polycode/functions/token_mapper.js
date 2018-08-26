@@ -74,6 +74,10 @@ module.exports = async (tokens, from, to, map) => {
 
   function translateToken(token, index, fromLanguage, toLanguage) {
     return new Promise((resolve, reject) => {
+      if (token.value.length === 1) {
+        token.translated = token.value;
+        resolve({"index": index, "token": token});
+      }
       var text = token.value;
       if (!token.isComment) {
         text = Case.lower(text);
