@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import argparse
+import codecs
 from fnmatch import fnmatch
 import requests
 # from lib import lib as lib_inst
@@ -49,7 +50,7 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     Translate a specific file
     """
 
-    with open(target_file) as f:
+    with codecs.open(target_file, "r", "utf-8") as f:
         source = f.read()
 
     map_file_path = TRANSLATE_DICT_FILES_PATH + '{}.map'.format(target_file)
@@ -78,9 +79,9 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
     translation_map_path = map_file_path
 
     # Write received files
-    with open(translated_file_path, 'w+') as wf:
+    with codecs.open(translated_file_path, "w", "utf-8") as wf:
         wf.write(translated)
-    with open(translation_map_path, 'w+') as wf:
+    with codecs.open(translation_map_path, "w", "utf-8") as wf:
         wf.write(translation_map)
 
 
