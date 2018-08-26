@@ -27,12 +27,12 @@ module.exports = async (tokens, from, to, map) => {
   if (fromLangIdx === -1) { // from language not found
     fromLangIdx = map["languages"].length;
     map["languages"].push(from);
-    map["tokens"].forEach(row => {row.add(null)});
+    map["tokens"].forEach(row => {row.push(null)});
   }
   if (toLangIdx === -1) { // to language not found
     toLangIdx = map["languages"].length;
     map["languages"].push(to);
-    map["tokens"].forEach(row => {row.add(null)});
+    map["tokens"].forEach(row => {row.push(null)});
   }
 
   for (let i = 0; i < tokens.length; i++) {
