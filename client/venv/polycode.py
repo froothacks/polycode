@@ -17,6 +17,20 @@ TRANSLATED_FILES_PATH_TEMPLATE = 'repo-{}/'
 TRANSLATE_DICT_FILES_PATH = '.polycodedata/'
 SERVER_URL = 'https://davidgu.stdlib.com/polycode@dev'
 
+def fake_backend(payload):
+    print(payload)
+    return json.dumps({
+        'doc':'This is a source code file that would be translated',
+        'map':{
+            "languages": ["EN", "FR", "ZH"],
+            "tokens": [
+                ["banana", "banane", "香蕉"],
+                ["fish", "poisson", "鱼"],
+                ["banana_fish", "banane_poisson", "香蕉_鱼"]
+            ]
+        }
+    })
+
 
 def help():
     helptext = """
@@ -46,9 +60,15 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
             map = json.loads(map)
 
     # result = lib_inst.davidgu.polycode['@dev'](source, config, map)
-    payload = {'doc': source, 'from': SOURCE_LANG, 'to': DEST_LANG, 'map': map}
-    req = requests.get(SERVER_URL, params=payload)
-    result = json.loads(req.text)
+
+    payload = {'doc': source, 'from': SOURCE_LANG, 
+        'to': DEST_LANG, 'map': json.dumps(map)}
+    # print(payload)
+    # req = requests.get(SERVER_URL, params=payload)
+    # result = json.loads(req.text)
+
+    # Use fake backend for testing
+    result = json.loads(fake_backend(payload))
 
     translated = result['doc']
     translation_map = json.dumps(result['map'])
@@ -103,49 +123,10 @@ def translate_all(config, DEST_LANG, additional_ignores=[]):
         if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
             translate_file(config, file, SOURCE_LANG, DEST_LANG)
 
-    with open(TRANSLATE_TEMP_FILENAME, 'rw') as f:
+    with open(TRANSLATE_TEMP_FILENAME, 'r+') as f:
         tmp_data = json.loads(f.read())
         tmp_data['current_lang'] = DEST_LANG
         f.write(json.dumps(tmp_data))
-
-
-def translate():
-    """
-    Helper function performing all operations when command line arg 'translate'
-    is called. Allows for no argument calling of translation function.
-    """
-    # Load config file
-    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
-        with open(TRANSLATE_CONFIG_FILENAME) as f:
-            config = json.load(f)
-    else:
-        print("Error: No config file found!")
-        sys.exit()
-
-    DEST_LANG = sys.argv[2]
-    translate_all(config, DEST_LANG)
-
-
-def untranslate():
-    """
-    Helper function performing all operations when command line arg
-    'untranslate' is called. Allows for no argument calling of untranslation
-    function.
-
-    Loops through every non ignored file in the current folder and translates
-    them back from the current repo language to the project source language
-    """
-    # Load config file
-    if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
-        with open(TRANSLATE_CONFIG_FILENAME) as f:
-            config = json.load(f)
-    else:
-        print("Error: No config file found!")
-        sys.exit()
-
-    SOURCE_LANG = config['source_lang']
-    translate_all(config, SOURCE_LANG)
-
 
 if __name__ == '__main__':
     # Load project config file
@@ -185,25 +166,30 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.command == 'translate':
+        OUTPUT_LANG = pconfig['output_lang']
+        # If a specific output language is specified, use it
+        if args.language:
+            OUTPUT_LANG = args.language
+        translate_file(config, args.single_file, config['source_lang'],
+            OUTPUT_LANG)
+
         # If a single file is specified, apply translation to that file
         if args.single_file:
-            OUTPUT_LANG = pconfig['output_lang']
-            # If a specific output language is specified, use it
-            if args.language:
-                OUTPUT_LANG = args.language
-            translate_file(config, args.single_file, config['source_lang'],
-                OUTPUT_LANG)
             # Remember translated file in temporary file
-            with open(TRANSLATE_TEMP_FILENAME, 'rw') as f:
+            with open(TRANSLATE_TEMP_FILENAME, 'r') as f:
                 tmp_data = json.loads(f.read())
                 if 'single_translated_files' in tmp_data:
-                    tmp_data['single_translated_files'].append(
-                        '{} {}'.format(args.single_file, OUTPUT_LANG))
+                    # Only add the file to the list of singly translated files if it is not already in there
+                    if args.single_file not in [x.split(' ')[0] for x in tmp_data['single_translated_files']]:
+                        tmp_data['single_translated_files'].append(
+                            '{} {}'.format(args.single_file, OUTPUT_LANG))
                 else:
                     tmp_data['single_translated_files'] = [
                         '{} {}'.format(args.single_file, OUTPUT_LANG)]
+            with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
+                f.write(json.dumps(tmp_data))
         else:
-            translate()
+            translate_all(config, OUTPUT_LANG)
     
     # Untranslate reverts all translated files to the project source lang
     if args.command == 'untranslate':
@@ -212,7 +198,7 @@ if __name__ == '__main__':
         # translated
         # Remember translated file in temporary file
 
-        with open(TRANSLATE_TEMP_FILENAME, 'rw') as f:
+        with open(TRANSLATE_TEMP_FILENAME, 'r+') as f:
             tmp_data = json.loads(f.read())
             # If the current state of the entire repo is translated, store 
             # the updated file under the single translated files. Otherwise,
@@ -225,21 +211,22 @@ if __name__ == '__main__':
             # If the whole repo is translated and the file is individually
             # translated to the source lang, fail with an error message
 
+        # Get the singly translated files and filenames
+        st_files = tmp_data['single_translated_files']
+        st_filenames = [x.split(' ')[0] for x in st_files]
+
         # Check whole repo translation state
         if tmp_data['current_lang'] != config['source_lang']:
             # The whole repo has been translated
 
-            # Get the singly translated files and filenames
-            st_files = tmp_data['single_translated_files']
-            st_filenames = [x.split(' ')[0] for x in st_files]
 
             # Check if a single file is specified
             if args.single_file:
                 # If the single file was specially translated, get it's current
                 # language from the temp file
                 
-                if args.single_file in st_filenames
-                    for file in single_translated_files:
+                if args.single_file in st_filenames:
+                    for file in st_files:
                         filename, file_lang = file.split(' ')
                         if args.single_file == filename:
                             file_current_lang = file_lang 
@@ -285,7 +272,7 @@ if __name__ == '__main__':
                 # source_lang and thus marked in the list, translation will be
                 # attempted for source_lang -> source_lang and nothing will
                 # happen. This is intended behavior.
-                for file in single_translated_files:
+                for file in st_files:
                     filename, file_current_lang = file.split(' ')
                     translate_file(config, filename, file_current_lang,
                         config['source_lang'])
@@ -303,8 +290,8 @@ if __name__ == '__main__':
                 # list of singly translated files to see if my single file is
                 # in there. If it is not, I return an error since the file has
                 # not yet been translated
-                if args.single_file in st_filenames
-                    for file in single_translated_files:
+                if args.single_file in st_filenames:
+                    for file in st_files:
                         filename, file_lang = file.split(' ')
                         if args.single_file == filename:
                             file_current_lang = file_lang 
@@ -315,7 +302,7 @@ if __name__ == '__main__':
 
                     for idx in range(len(st_files)):
                         if st_files[idx].split(' ')[0] == args.single_file:
-                            st_files.remove(idx)
+                            st_files.pop(idx)
                             tmp_data['single_translated_files'] = st_files
                             
                     with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
@@ -328,7 +315,7 @@ if __name__ == '__main__':
                 # Untranslate every file that is found in the
                 # single_translated_files list from their current lang to the
                 # 'source_lang'
-                for file in single_translated_files:
+                for file in st_files:
                     filename, file_current_lang = file.split(' ')
                     translate_file(config, filename, file_current_lang,
                         config['source_lang'])
