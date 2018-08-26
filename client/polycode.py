@@ -64,12 +64,12 @@ def translate_file(config, target_file, SOURCE_LANG, DEST_LANG):
         wf.write(translation_map)
 
 
-def translate_all(config, DEST_LANG):
+def translate_all(config, DEST_LANG, additional_ignores=[]):
     """
     Translate all files, excluding those defined by the polycodeignore file
     """
     # Load polycodeignore
-    ignore_files = []
+    ignore_files = additional_ignores
     if os.path.isfile(TRANSLATE_IGNORE_FILENAME):
         with open(TRANSLATE_IGNORE_FILENAME) as f:
             for line in f:
@@ -131,6 +131,9 @@ def untranslate():
     Helper function performing all operations when command line arg
     'untranslate' is called. Allows for no argument calling of untranslation
     function.
+
+    Loops through every non ignored file in the current folder and translates
+    them back from the current repo language to the project source language
     """
     # Load config file
     if os.path.isfile(TRANSLATE_CONFIG_FILENAME):
@@ -204,9 +207,136 @@ if __name__ == '__main__':
     
     # Untranslate reverts all translated files to the project source lang
     if args.command == 'untranslate':
-        # TODO: Check for the existence of single translated files, and 
-        # translate those individually
-        untranslate()
+        # Accept single file flag to untranslate a specific file
+        # TODO:Give an error message if the specified file is not currently
+        # translated
+        # Remember translated file in temporary file
+
+        with open(TRANSLATE_TEMP_FILENAME, 'rw') as f:
+            tmp_data = json.loads(f.read())
+            # If the current state of the entire repo is translated, store 
+            # the updated file under the single translated files. Otherwise,
+            # if the untranslated file is an individually translated file,
+            # remove it from the list of single translated files.
+
+            # flow: Check whole repo state -> Check individual file state ->
+            # if the whole repo is not translated and the file is not
+            # individually translated, fail with error message.
+            # If the whole repo is translated and the file is individually
+            # translated to the source lang, fail with an error message
+
+        # Check whole repo translation state
+        if tmp_data['current_lang'] != config['source_lang']:
+            # The whole repo has been translated
+
+            # Get the singly translated files and filenames
+            st_files = tmp_data['single_translated_files']
+            st_filenames = [x.split(' ')[0] for x in st_files]
+
+            # Check if a single file is specified
+            if args.single_file:
+                # If the single file was specially translated, get it's current
+                # language from the temp file
+                
+                if args.single_file in st_filenames
+                    for file in single_translated_files:
+                        filename, file_lang = file.split(' ')
+                        if args.single_file == filename:
+                            file_current_lang = file_lang 
+
+                    # Untranslate that specific file and remove it from the 
+                    # single_translated_files list
+                    translate_file(config, filename, file_lang,
+                        config['source_lang'])
+
+                    for idx in range(len(st_files)):
+                        if st_files[idx].split(' ')[0] == args.single_file:
+                            st_files.remove(idx)
+                            tmp_data['single_translated_files'] = st_files
+                            
+                    with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
+                        f.write(json.dumps(tmp_data))
+                
+                # Else, it's current language is the whole repo language
+                else:
+                    # Untranslate that specific file and mark it in the
+                    # single_translated_files list
+                    translate_file(config, filename, tmp_data['current_lang'],
+                        config['source_lang'])
+                    st_files.append('{} {}'.format(
+                        filename, config['source_lang']))
+                    tmp_data['single_translated_files'] = st_files
+                    with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
+                        f.write(json.dumps(tmp_data))
+
+            else:
+                # Untranslate every file that is not found in the
+                # single_translated_files list from the 'current_lang' to the
+                # 'source_lang'. Pass in single_translated_files list as 
+                # additional ignores
+                translate_all(config, config['source_lang'], 
+                    st_filenames)
+
+                # Untranslate every file that is found in the
+                # single_translated_files list from their current lang to the
+                # 'source_lang'
+                #
+                # For files that have been individually translated back to the
+                # source_lang and thus marked in the list, translation will be
+                # attempted for source_lang -> source_lang and nothing will
+                # happen. This is intended behavior.
+                for file in single_translated_files:
+                    filename, file_current_lang = file.split(' ')
+                    translate_file(config, filename, file_current_lang,
+                        config['source_lang'])
+
+                # Clear the list of specially translated files
+                tmp_data['single_translated_files'] = []
+                with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
+                    f.write(json.dumps(tmp_data))
+        else:
+            # The whole repo has not yet been translated.
+
+            # Check if a single file is specified
+            if args.single_file:
+                # Since the whole repo is not yet translated, I must search the
+                # list of singly translated files to see if my single file is
+                # in there. If it is not, I return an error since the file has
+                # not yet been translated
+                if args.single_file in st_filenames
+                    for file in single_translated_files:
+                        filename, file_lang = file.split(' ')
+                        if args.single_file == filename:
+                            file_current_lang = file_lang 
+                    # Untranslate that specific file and remove it from the 
+                    # single_translated_files list
+                    translate_file(config, filename, file_lang,
+                        config['source_lang'])
+
+                    for idx in range(len(st_files)):
+                        if st_files[idx].split(' ')[0] == args.single_file:
+                            st_files.remove(idx)
+                            tmp_data['single_translated_files'] = st_files
+                            
+                    with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
+                        f.write(json.dumps(tmp_data))
+                else:
+                    print('Error: Target file has not yet been translated')
+                    sys.exit()
+            
+            else:
+                # Untranslate every file that is found in the
+                # single_translated_files list from their current lang to the
+                # 'source_lang'
+                for file in single_translated_files:
+                    filename, file_current_lang = file.split(' ')
+                    translate_file(config, filename, file_current_lang,
+                        config['source_lang'])
+
+                # Clear the list of specially translated files
+                tmp_data['single_translated_files'] = []
+                with open(TRANSLATE_TEMP_FILENAME, 'w') as f:
+                    f.write(json.dumps(tmp_data))
 
     if args.command == 'commit':
         pass
