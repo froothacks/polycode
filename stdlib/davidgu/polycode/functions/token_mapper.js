@@ -1,88 +1,97 @@
+const googleTranslate = require('google-translate')(process.env.apiKey);
+const lib = require('lib');
 const Case = require('case');
 
-var querystring = require('querystring');
-
-var got = require('got');
-var safeEval = require('safe-eval');
-
 /**
- * Last update: 2016/06/26
- * https://translate.google.com/translate/releases/twsfe_w_20160620_RC00/r/js/desktop_module_main.js
- *
- * Everything between 'BEGIN' and 'END' was copied from the url above.
- */
+* @param {array} tokens
+* @param {string} from
+* @param {string} to
+* @param {object} map
+* @returns {object} 
+*/
+module.exports = async (tokens, from, to, map) => {
+  const allPromises = [];
 
-function sM(a) {
-    var b;
-    if (null !== yr)
-        b = yr;
-    else {
-        b = wr(String.fromCharCode(84));
-        var c = wr(String.fromCharCode(75));
-        b = [b(), b()];
-        b[1] = c();
-        b = (yr = window[b.join(c())] || "") || ""
-    }
-    var d = wr(String.fromCharCode(116))
-        , c = wr(String.fromCharCode(107))
-        , d = [d(), d()];
-    d[1] = c();
-    c = "&" + d.join("") + "=";
-    d = b.split(".");
-    b = Number(d[0]) || 0;
-    for (var e = [], f = 0, g = 0; g < a.length; g++) {
-        var l = a.charCodeAt(g);
-        128 > l ? e[f++] = l : (2048 > l ? e[f++] = l >> 6 | 192 : (55296 == (l & 64512) && g + 1 < a.length && 56320 == (a.charCodeAt(g + 1) & 64512) ? (l = 65536 + ((l & 1023) << 10) + (a.charCodeAt(++g) & 1023),
-            e[f++] = l >> 18 | 240,
-            e[f++] = l >> 12 & 63 | 128) : e[f++] = l >> 12 | 224,
-            e[f++] = l >> 6 & 63 | 128),
-            e[f++] = l & 63 | 128)
-    }
-    a = b;
-    for (f = 0; f < e.length; f++)
-        a += e[f],
-            a = xr(a, "+-a^+6");
-    a = xr(a, "+-3^+b+-f");
-    a ^= Number(d[1]) || 0;
-    0 > a && (a = (a & 2147483647) + 2147483648);
-    a %= 1E6;
-    return c + (a.toString() + "." + (a ^ b))
-}
+  var fromLangIdx, toLangIdx;
 
-var yr = null;
-var wr = function(a) {
-    return function() {
-        return a
+  if (!map["languages"]) {
+    map["languages"] = []
+  }
+
+  if (!map["tokens"]) {
+    map["tokens"] = []
+  }
+
+  fromLangIdx = map["languages"].indexOf(from);
+  toLangIdx = map["languages"].indexOf(to);
+  if (fromLangIdx === -1) { // from language not found
+    fromLangIdx = map["languages"].length;
+    map["languages"].push(from);
+    map["tokens"].forEach(row => {row.push(null)});
+  }
+  if (toLangIdx === -1) { // to language not found
+    toLangIdx = map["languages"].length;
+    map["languages"].push(to);
+    map["tokens"].forEach(row => {row.push(null)});
+  }
+
+  for (let i = 0; i < tokens.length; i++) {
+    let inDict = false;
+    map["tokens"].forEach(row => {
+      if (row[toLangIdx] && row[fromLangIdx] === tokens[i].value) {
+        tokens[i].translated = row[toLangIdx];
+        inDict = true;
+      }
+    });
+    if (!inDict) {
+      var text = tokens[i].value;
+      if (!tokens[i]["isComment"]) {
+        Case.lower(text);
+      }
+      allPromises.push(translateText(text, from, to));
     }
-}
-    , xr = function(a, b) {
-    for (var c = 0; c < b.length - 2; c += 3) {
-        var d = b.charAt(c + 2)
-            , d = "a" <= d ? d.charCodeAt(0) - 87 : Number(d)
-            , d = "+" == b.charAt(c + 1) ? a >>> d : a << d;
-        a = "+" == b.charAt(c) ? a + d & 4294967295 : a ^ d
+  }
+  const results = await Promise.all(allPromises);
+  results.forEach((item, i) => {
+    origToken = tokens[i].value;
+    
+    var text = item;
+    if (!tokens[i]["isComment"]) {
+      Case.lower(text);
     }
-    return a
+    tokens[i].translated = Case[Case.of(origToken)](item).split(" ").join("_");
+    var found = false;
+    for (var i = 0; i < map["tokens"].length; i++) {
+      if (map["tokens"][i][fromLangIdx] === origToken) {
+        map["tokens"][i][toLangIdx] = tokens[i].translated;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      row = new Array(map["languages"].length).fill(null);
+      row[fromLangIdx] = origToken;
+      row[toLangIdx] = tokens[i].translated;
+      map["tokens"].push(row);
+    }
+  });
+  
+  return {"tokens": tokens, "map": map};
+
+  function translateText(text, fromLanguage, toLanguage) {
+    return new Promise((resolve, reject) => {
+      googleTranslate.translate(text, fromLanguage, toLanguage, (err, translation) => {
+        if (err !== null) {
+          reject(err);
+        }
+        else {
+          resolve(translation.translatedText);
+        }
+      });
+    });
+  }
 };
-
-var window = {
-    TKK: '0'
-};
-
-function updateTKK() {
-    return new Promise(function (resolve, reject) {
-        var now = Math.floor(Date.now() / 3600000);
-
-        if (Number(window.TKK.split('.')[0]) === now) {
-            resolve();
-        } else {
-            got('https://translate.google.com').then(function (res) {
-                var code = res.body.match(/TKK=(.*?)\(\)\)'\);/g);
-
-                if (code) {
-                    eval(code[0]);
-                    /* eslint-disable no-undef */
-                    if (typeof TKK !== 'undefined') {
+if (typeof TKK !== 'undefined') {
                         window.TKK = TKK;
                         // config.set('TKK', TKK);
                     }
