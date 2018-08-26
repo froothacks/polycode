@@ -1,5 +1,5 @@
 const filbert = require("filbert");
-
+const acorn = require("acorn");
 /**
 * @param {string} doc
 * @param {string} lang
@@ -52,6 +52,40 @@ getTokensForLang = {
   },
 
   "javascript": function(doc) {
+    var tokens = [];
 
+    for (let token of acorn.tokenizer(doc)) {
+      if (token.type.label === "name") {
+        tokens.push({
+          start: token.start,
+          end: token.end,
+          value: token.value,
+          type: { type: token.type.label }
+        });
+      }
+    }
+
+    var runningLength = 0;
+
+    doc.split("\n").forEach(line => {
+      var hash = line.indexOf("//");
+      if (hash !== -1) {
+
+        var start = hash + 2;
+        while (line.charAt(start) == " ") start++;
+
+        var text = line.slice(start);
+        tokens.push({
+          "value": text,
+          "start": start + runningLength,
+          "end": runningLength + line.length,
+          "isComment": true
+        });
+      }
+      runningLength += line.length + 1; // + 1 for newline
+    });
+
+    tokens.sort((a, b) => {return a["start"] - b["start"]});
+    return tokens;
   }
 }
