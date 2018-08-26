@@ -130,7 +130,8 @@ def translate_all(config, DEST_LANG, additional_ignores=[]):
 
     for file in target_files:
         if os.path.splitext(file)[-1] in TARGET_FILE_EXTENSIONS:
-            translate_file(config, file, SOURCE_LANG, DEST_LANG)
+            # translate_file(config, file, SOURCE_LANG, DEST_LANG)
+            print(file)
 
     with open(TRANSLATE_TEMP_FILENAME, 'r+') as f:
         tmp_data = json.loads(f.read())
