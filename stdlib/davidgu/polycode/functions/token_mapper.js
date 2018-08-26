@@ -44,28 +44,19 @@ module.exports = async (tokens, from, to, map) => {
       }
     });
     if (!inDict) {
-      var value = tokens[i].value;
-      if (!tokens[i].isComment) {
-        value = Case.lower(value);
-      }
-      allPromises.push(translateText(value, i, from, to));
+      allPromises.push(translateToken(tokens[i], i, from, to));
     }
   }
   var results = await Promise.all(allPromises);
   results.forEach(result => {
-    token = tokens[result["index"]];
-    origValue = result["origValue"]
-    var translated = result["translated"];
-    if (!token.isComment) {
-      translated = Case[Case.of(origValue)](translated).split(" ").join("_");
-    }
-    token.translated = translated;
+    var token = result.token;
+    tokens[result.index] = token;
 
     // Update map with new language translation of a token that 
     var found = false;
     for (var j = 0; j < map["tokens"].length; j++) {
-      if (map["tokens"][j][fromLangIdx] === origValue) {
-        map["tokens"][j][toLangIdx] = translated;
+      if (map["tokens"][j][fromLangIdx] === token.value) {
+        map["tokens"][j][toLangIdx] = token.translated;
         found = true;
         break;
       }
@@ -73,26 +64,32 @@ module.exports = async (tokens, from, to, map) => {
     if (!found) {
       // Completely new token: push new row
       row = new Array(map["languages"].length).fill(null);
-      row[fromLangIdx] = origValue;
-      row[toLangIdx] = translated;
+      row[fromLangIdx] = token.value;
+      row[toLangIdx] = token.translated;
       map["tokens"].push(row);
     }
   });
   
   return {"tokens": tokens, "map": map};
 
-  function translateText(value, index, fromLanguage, toLanguage) {
+  function translateToken(token, index, fromLanguage, toLanguage) {
     return new Promise((resolve, reject) => {
-      googleTranslate.translate(value, fromLanguage, toLanguage, (err, translation) => {
+      var text = token.value;
+      if (!token.isComment) {
+        text = Case.lower(text);
+      }
+      googleTranslate.translate(text, fromLanguage, toLanguage, (err, translation) => {
         if (err !== null) {
           reject(err);
         }
         else {
-          resolve({
-            "index": index,
-            "origValue": value,
-            "translated": translation.translatedText
-          });
+          var translated = translation.translatedText;
+          if (!token.isComment) {
+            translated = Case[Case.of(token.value)](translated).split(" ").join("_");
+          }
+          token.translated = translated;
+
+          resolve({"index": index, "token": token});
         }
       });
     });
