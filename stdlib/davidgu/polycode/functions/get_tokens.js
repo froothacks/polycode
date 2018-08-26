@@ -1,5 +1,6 @@
 const filbert = require("filbert");
-const acorn = require("acorn");
+const acorn = require('acorn-jsx');
+
 /**
 * @param {string} doc
 * @param {string} lang

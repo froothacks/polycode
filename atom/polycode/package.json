@@ -2,12 +2,13 @@
   "name": "polycode",
   "main": "./lib/polycode",
   "version": "0.0.0",
-  "description": "A short description of your package",
+  "description": "An atom plugin to help you polycode faster",
   "keywords": [],
   "activationCommands": {
-    "atom-workspace": "polycode:translate"
+    "atom-workspace": "polycode:translate",
+    "atom-workspace": "polycode:untranslate"
   },
-  "repository": "https://github.com/atom/polycode",
+  "repository": "https://github.com/froothacks/polycode",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
