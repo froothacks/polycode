@@ -6,7 +6,7 @@ const filbert = require("filbert");
 * @returns {array} tokens
 */
 module.exports = async (doc, lang="python") => {
-  if (!(lang in getTokensForLang))
+  if (!(lang in getTokensForLang)) lang = "python";
   return getTokensForLang[lang](doc);
 };
 
