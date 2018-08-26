@@ -176,6 +176,10 @@ def main():
         type=str, help='Translate a single file instead of the whole project')
     parser.add_argument('-l', '--language', type=str,
         help='Specify the language to translate to.')
+    parser.add_argument('-w', '--word', type=str, 
+        help='Define a word to define or get a definition of.')
+    parser.add_argument('-d', '--definition', type=str, 
+        help='The new value of the specified word.')
     args = parser.parse_args()
 
     if args.command == 'translate':
@@ -347,10 +351,12 @@ def main():
         # Doesn't handle invalid args
         word = args.word
         definition = args.definition
+        file = args.single_file
         from_lang = config['source_lang']
         to_lang = args.language if args.language else pconfig['output_lang']
 
-        dictionary_path = 'test_dictionary.json'  # Fix this
+        map_file_path = TRANSLATE_DICT_FILES_PATH + '{}.map'.format(file)
+        dictionary_path = map_file_path
         json_data = json.loads(open(dictionary_path).read())
         dictionary = json_data['tokens']
         languages = json_data['languages']
@@ -376,10 +382,12 @@ def main():
 
     if args.command == 'definition':
         word = args.word
+        file = args.single_file
         from_lang = config['source_lang']
         to_lang = args.language if args.language else pconfig['output_lang']
 
-        dictionary_path = 'test_dictionary.json'  # Fix this
+        map_file_path = TRANSLATE_DICT_FILES_PATH + '{}.map'.format(file)
+        dictionary_path = map_file_path
         json_data = json.loads(open(dictionary_path).read())
         dictionary = json_data['tokens']
         languages = json_data['languages']

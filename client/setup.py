@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='polycode',
-    version='1.0.0',
+    version='1.0.2',
     description='Translate your code to a different spoken language',
     long_description=long_description,
     long_description_content_type='text/markdown',
